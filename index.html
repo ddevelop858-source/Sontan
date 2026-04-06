@@ -1,75 +1,75 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sontan System Pro</title>
+    <title>Sontan System Pro Max</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         :root { --neon: #00f2ff; --pink: #ff00ff; --bg: #05070a; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
         
-        /* КОСМИЧЕСКИЙ ФОН */
         #space-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%); }
         .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--d) infinite; }
         @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-        /* РАДИО ПО УГЛАМ */
-        .radio-box { position: fixed; top: 10px; z-index: 2000; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 8px; border: 1px solid var(--neon); font-size: 10px; }
-        .left-top { left: 10px; }
-        .right-top { right: 10px; }
-        iframe { border: none; width: 140px; height: 40px; }
+        /* КРУГЛЫЕ КНОПКИ РАДИО */
+        .radio-btn { 
+            position: fixed; top: 20px; width: 50px; height: 50px; 
+            border-radius: 50%; border: 2px solid var(--neon); 
+            background: rgba(0,0,0,0.5); color: var(--neon);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: bold; cursor: pointer; z-index: 2000;
+            box-shadow: 0 0 10px var(--neon); transition: 0.3s;
+        }
+        .radio-btn.active { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); }
+        .r-left { left: 20px; border-color: var(--pink); color: var(--pink); box-shadow: 0 0 10px var(--pink); }
+        .r-left.active { background: var(--pink); color: white; box-shadow: 0 0 20px var(--pink); }
+        .r-right { right: 20px; }
 
         #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .v-container { position: relative; width: 300px; height: 300px; border-radius: 50%; overflow: hidden; border: 3px solid var(--neon); }
+        video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* СКАНЕР ТРАНСФОРМЕР */
-        .v-container { position: relative; width: 300px; height: 300px; border-radius: 50%; overflow: hidden; border: 4px double var(--neon); box-shadow: 0 0 20px var(--neon); }
-        video { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.2) contrast(1.1); }
-        #canvas { position: absolute; top: 0; left: 0; z-index: 20; }
-        #scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--neon); box-shadow: 0 0 15px var(--neon); opacity: 0; z-index: 22; }
+        /* Исправленный холст для линий */
+        #canvas { position: absolute; top: 0; left: 0; z-index: 30; pointer-events: none; background: transparent; }
 
-        #logo { color: var(--neon); font-size: 28px; font-weight: bold; text-shadow: 0 0 15px var(--neon); margin-bottom: 20px; }
+        #scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--neon); box-shadow: 0 0 15px var(--neon); opacity: 0; z-index: 31; }
+        @keyframes scanAnim { 0% { top: 0%; } 100% { top: 100%; } }
 
         /* ЧАТ */
         #chat-ui { display: none; height: 100dvh; flex-direction: column; }
         #messages { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: rgba(26, 31, 41, 0.8); padding: 12px; border-radius: 15px; border-left: 4px solid var(--neon); align-self: flex-start; cursor: pointer; transition: 0.2s; }
-        .msg:active { transform: scale(0.95); opacity: 0.7; }
+        .msg { background: rgba(26, 31, 41, 0.8); padding: 12px; border-radius: 15px; border-left: 4px solid var(--neon); align-self: flex-start; }
         
         .input-area { position: fixed; bottom: 0; width: 100%; padding: 15px; background: rgba(22, 27, 34, 0.95); display: flex; gap: 10px; box-sizing: border-box; }
         input { flex: 1; background: #0d1117; border: 1px solid var(--neon); color: white; padding: 12px; border-radius: 10px; outline: none; }
-        .btn { background: var(--neon); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; }
+        .btn-send { background: var(--neon); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="space-bg"></div>
 
-    <div class="radio-box left-top">
-        <div>CLUB MUSIC</div>
-        <audio controls style="width: 120px; height: 30px;"><source src="https://radio-holding.ru:9433/marusya_fm" type="audio/mpeg"></audio>
-    </div>
-    <div class="radio-box right-top">
-        <div>RAP LIVE</div>
-        <audio controls style="width: 120px; height: 30px;"><source src="http://air.radiorecord.ru:805/black_main" type="audio/mpeg"></audio>
-    </div>
+    <div id="btn-club" class="radio-btn r-left" onclick="toggleRadio('club')">CLUB</div>
+    <div id="btn-trap" class="radio-btn r-right" onclick="toggleRadio('trap')">TRAP</div>
 
     <div id="auth-screen">
-        <div id="logo">Sontan System</div>
+        <div id="logo" style="color:var(--neon); font-size:24px; margin-bottom:20px; text-shadow:0 0 10px var(--neon)">Sontan System</div>
         <div class="v-container">
             <video id="video" autoplay muted playsinline></video>
             <canvas id="canvas" width="300" height="300"></canvas>
             <div id="scan-line"></div>
         </div>
-        <button class="btn" style="margin-top:20px" onclick="initScanner()">ЗАПУСТИТЬ СКАНЕР</button>
+        <button class="btn-send" style="margin-top:20px" onclick="initScanner()">SCAN</button>
     </div>
 
     <div id="chat-ui">
         <div id="messages"></div>
         <div class="input-area">
-            <input type="text" id="m-input" placeholder="Космос на связи...">
-            <button class="btn" onclick="sendMsg()">></button>
+            <input type="text" id="m-input" placeholder="Введите сообщение...">
+            <button class="btn-send" onclick="sendMsg()">></button>
         </div>
     </div>
 
@@ -79,28 +79,50 @@
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
         let myName = "Serega";
 
-        // Создание звезд
+        // Радио логика
+        const streams = {
+            club: new Audio('https://air.radiorecord.ru:805/club_320'),
+            trap: new Audio('https://air.radiorecord.ru:805/trap_320')
+        };
+
+        function toggleRadio(type) {
+            const btn = document.getElementById('btn-' + type);
+            if (streams[type].paused) {
+                Object.values(streams).forEach(s => s.pause());
+                document.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('active'));
+                streams[type].play();
+                btn.classList.add('active');
+            } else {
+                streams[type].pause();
+                btn.classList.remove('active');
+            }
+        }
+
+        // Звезды
         const bg = document.getElementById('space-bg');
-        for(let i=0; i<100; i++) {
+        for(let i=0; i<80; i++) {
             let s = document.createElement('div');
             s.className = 'star';
             s.style.left = Math.random()*100+'%';
             s.style.top = Math.random()*100+'%';
-            s.style.width = s.style.height = Math.random()*3+'px';
+            s.style.width = s.style.height = Math.random()*2+'px';
             s.style.setProperty('--d', Math.random()*3+2+'s');
             bg.appendChild(s);
         }
 
         async function initScanner() {
             const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-            ]);
+            await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            document.getElementById('video').srcObject = stream;
-            checkFaces();
+            const video = document.getElementById('video');
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+                video.play();
+                checkFaces();
+            };
         }
 
         async function checkFaces() {
@@ -120,7 +142,7 @@
                 if (resized.length > 0) {
                     line.style.opacity = "1";
                     line.style.animation = "scanAnim 2s infinite linear";
-                    // Рисуем сетку Landmarks
+                    // Отрисовка линий лица
                     faceapi.draw.drawFaceLandmarks(canvas, resized);
 
                     resized.forEach(d => {
@@ -132,7 +154,7 @@
                         });
                     });
                 }
-            }, 200);
+            }, 150);
         }
 
         function startChat() {
@@ -158,19 +180,14 @@
             supabaseClient.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => loadMsgs()).subscribe();
         }
 
-        // УДАЛЕНИЕ СООБЩЕНИЯ
-        async function deleteMsg(id) {
-            if(confirm("Удалить это сообщение?")) {
-                await supabaseClient.from('messages').delete().eq('id', id);
-            }
-        }
-
         function render(m) {
             const b = document.getElementById('messages');
             const div = document.createElement('div');
             div.className = 'msg';
             div.innerHTML = `<b>${m.sender_name}:</b><br>${m.content}`;
-            div.onclick = () => deleteMsg(m.id); // Удаление по клику
+            div.onclick = async () => {
+                if(confirm("Удалить?")) await supabaseClient.from('messages').delete().eq('id', m.id);
+            };
             b.appendChild(div);
             b.scrollTop = b.scrollHeight;
         }
