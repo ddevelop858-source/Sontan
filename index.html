@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sontan Ultimate</title>
+    <title>Sontan Ultimate Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
@@ -15,7 +15,7 @@
         .v-container { position: relative; width: 320px; height: 240px; margin: 20px 0; border-radius: 15px; overflow: hidden; border: 2px solid #1a1f29; }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Холст для линий биометрии - ПОВЕРХ ВСЕГО */
+        /* Холст для линий биометрии */
         #canvas { position: absolute; top: 0; left: 0; z-index: 20; pointer-events: none; }
 
         #scanner-overlay { position: absolute; inset: 15px; border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; opacity: 0; z-index: 21; }
@@ -24,7 +24,7 @@
 
         #logo { color: var(--neon); font-size: 26px; font-weight: bold; cursor: pointer; padding: 10px; text-shadow: 0 0 10px var(--neon); }
 
-        /* --- ИСПРАВЛЕННЫЙ ЧАТ --- */
+        /* ЧАТ С ФИКСИРОВАННЫМ ВВОДОМ */
         #chat-ui { display: none; height: 100dvh; flex-direction: column; background: var(--bg); position: relative; }
         
         #messages { 
@@ -34,7 +34,7 @@
             display: flex; 
             flex-direction: column; 
             gap: 12px; 
-            padding-bottom: 90px; /* Чтобы сообщения не прятались за вводом */
+            padding-bottom: 100px; /* Запас для поля ввода */
         }
         
         .msg { 
@@ -43,7 +43,7 @@
             border-radius: 12px; 
             border-left: 4px solid var(--neon); 
             align-self: flex-start; 
-            max-width: 80%;
+            max-width: 85%;
             word-wrap: break-word;
         }
 
@@ -103,42 +103,39 @@
         const SB_URL = 'https://gwegmxznhlmzejqdpykv.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-        let myName = "Serega";
+        
+        // По умолчанию Serega, но код обновит это при входе
+        let myCurrentUserName = "Serega"; 
 
-        // --- СЕКРЕТНЫЙ КОД ---
+        // СЕКРЕТНЫЙ КОД (Удержание логотипа 2 сек)
         let pressTimer;
         const logo = document.getElementById('logo');
         const askCode = () => {
-            const pass = prompt("Кодовое слово:");
-            if (pass === "Seregasib") {
+            if (prompt("Кодовое слово:") === "Seregasib") {
                 document.getElementById('reg-btn').style.display = 'block';
-                alert("Режим регистрации активирован!");
+                alert("Доступ к регистрации открыт!");
             }
         };
-
         logo.addEventListener('touchstart', (e) => { e.preventDefault(); pressTimer = setTimeout(askCode, 2000); });
         logo.addEventListener('touchend', () => clearTimeout(pressTimer));
-        logo.addEventListener('mousedown', () => pressTimer = setTimeout(askCode, 2000));
-        logo.addEventListener('mouseup', () => clearTimeout(pressTimer));
 
-        // --- БИОМЕТРИЯ С ЛИНИЯМИ ---
+        // СКАНЕР И ЛИНИИ
         async function initScanner() {
-            logo.innerText = "Загрузка модулей...";
+            logo.innerText = "Загрузка ИИ...";
             try {
                 const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
                 await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
 
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 document.getElementById('video').srcObject = stream;
-                logo.innerText = "Идет сканирование...";
-                
-                checkFaces();
-            } catch (e) { alert("Ошибка доступа к камере"); }
+                logo.innerText = "Сканирование...";
+                checkFacesLoop();
+            } catch (e) { alert("Ошибка камеры"); }
         }
 
-        async function checkFaces() {
+        async function checkFacesLoop() {
             const { data: users } = await supabaseClient.from('allowed_faces').select('*');
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -148,7 +145,6 @@
             setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
                 const resized = faceapi.resizeResults(detections, displaySize);
-                
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -156,14 +152,15 @@
                     document.getElementById('scanner-overlay').style.opacity = "1";
                     document.getElementById('scan-line').style.opacity = "1";
                     document.getElementById('scan-line').style.animation = "scanAnim 1.5s infinite linear";
-
-                    // РИСУЕМ СЕТКУ (Landmarks)
+                    
+                    // Рисуем сетку биометрии
                     faceapi.draw.drawFaceLandmarks(canvas, resized);
 
                     resized.forEach(d => {
                         users?.forEach(u => {
                             if (faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor)) < 0.5) {
-                                myName = u.name;
+                                // ИСПРАВЛЕНИЕ: Берем имя конкретного человека из базы
+                                myCurrentUserName = u.name; 
                                 startChat();
                             }
                         });
@@ -172,10 +169,10 @@
                     document.getElementById('scanner-overlay').style.opacity = "0";
                     document.getElementById('scan-line').style.opacity = "0";
                 }
-            }, 200);
+            }, 250);
         }
 
-        // --- ЛОГИКА ЧАТА ---
+        // ЧАТ
         function startChat() {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('chat-ui').style.display = 'flex';
@@ -185,7 +182,7 @@
         async function sendMsg() {
             const i = document.getElementById('m-input');
             if (!i.value) return;
-            await supabaseClient.from('messages').insert([{ sender_name: myName, content: i.value }]);
+            await supabaseClient.from('messages').insert([{ sender_name: myCurrentUserName, content: i.value }]);
             i.value = '';
         }
 
@@ -208,11 +205,11 @@
         async function registerGuest() {
             const name = prompt("Имя гостя:");
             if (!name) return;
-            const video = document.getElementById('video');
-            const detect = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+            const detect = await faceapi.detectSingleFace(document.getElementById('video')).withFaceLandmarks().withFaceDescriptor();
             if (detect) {
                 await supabaseClient.from('allowed_faces').insert([{ name: name, face_descriptor: Array.from(detect.descriptor) }]);
-                alert("Гость добавлен!");
+                alert("Гость " + name + " добавлен!");
+                document.getElementById('reg-btn').style.display = 'none';
             }
         }
     </script>
