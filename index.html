@@ -3,69 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sontan System Final</title>
+    <title>Sontan System Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         :root { --neon: #00f2ff; --pink: #ff00ff; --bg: #05070a; }
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; touch-action: none; }
         
-        #space-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%); }
-        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; animation: twinkle var(--d) infinite; }
-        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        #space-bg { position: fixed; inset: 0; z-index: -1; background: #05070a; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.4; }
 
-        /* КРУГЛЫЕ КНОПКИ РАДИО */
         .radio-btn { 
-            position: fixed; top: 20px; width: 55px; height: 55px; 
+            position: fixed; top: 15px; width: 50px; height: 50px; 
             border-radius: 50%; border: 2px solid var(--neon); 
-            background: rgba(0,0,0,0.7); color: var(--neon);
+            background: rgba(0,0,0,0.8); color: var(--neon);
             display: flex; align-items: center; justify-content: center;
-            font-size: 9px; font-weight: bold; cursor: pointer; z-index: 2000;
-            box-shadow: 0 0 15px var(--neon); transition: 0.3s; text-align: center;
+            font-size: 9px; font-weight: bold; z-index: 2000;
+            box-shadow: 0 0 10px var(--neon);
         }
-        .radio-btn.active { background: var(--neon); color: black; box-shadow: 0 0 25px var(--neon); }
-        .r-left { left: 20px; border-color: var(--pink); color: var(--pink); box-shadow: 0 0 15px var(--pink); }
-        .r-left.active { background: var(--pink); color: white; box-shadow: 0 0 25px var(--pink); }
-        .r-right { right: 20px; }
+        .active { background: var(--neon) !important; color: black !important; box-shadow: 0 0 20px var(--neon) !important; }
+        .r-left { left: 15px; border-color: var(--pink); color: var(--pink); box-shadow: 0 0 10px var(--pink); }
+        .r-right { right: 15px; }
 
         #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .v-container { position: relative; width: 280px; height: 280px; border-radius: 50%; overflow: hidden; border: 3px solid var(--neon); }
+        .v-container { position: relative; width: 260px; height: 260px; border-radius: 50%; overflow: hidden; border: 2px solid var(--neon); }
         video { width: 100%; height: 100%; object-fit: cover; }
         #canvas { position: absolute; top: 0; left: 0; z-index: 30; pointer-events: none; }
-        #scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--neon); box-shadow: 0 0 20px var(--neon); opacity: 0; z-index: 31; }
-        @keyframes scanAnim { 0% { top: 0%; } 100% { top: 100%; } }
 
-        /* ЧАТ */
         #chat-ui { display: none; height: 100dvh; flex-direction: column; }
-        #messages { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 110px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { background: rgba(26, 31, 41, 0.9); padding: 12px; border-radius: 15px; border-left: 4px solid var(--neon); align-self: flex-start; max-width: 80%; user-select: none; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 90px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { background: rgba(26, 31, 41, 0.9); padding: 10px; border-radius: 12px; border-left: 3px solid var(--neon); align-self: flex-start; max-width: 85%; }
         
-        .input-area { position: fixed; bottom: 0; width: 100%; height: 80px; padding: 15px; background: rgba(22, 27, 34, 0.98); display: flex; gap: 10px; box-sizing: border-box; z-index: 1001; }
-        input { flex: 1; background: #0d1117; border: 1px solid var(--neon); color: white; padding: 12px; border-radius: 10px; outline: none; height: 50px; box-sizing: border-box; }
-        .btn-send { background: var(--neon); color: black; border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; height: 50px; }
+        .input-area { position: fixed; bottom: 0; width: 100%; padding: 10px; background: #161b22; display: flex; gap: 8px; box-sizing: border-box; }
+        input { flex: 1; background: #0d1117; border: 1px solid var(--neon); color: white; padding: 10px; border-radius: 8px; outline: none; }
+        .btn-send { background: var(--neon); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="space-bg"></div>
 
-    <div id="btn-club" class="radio-btn r-left" onclick="toggleRadio('club')">RECORD<br>CLUB</div>
-    <div id="btn-trap" class="radio-btn r-right" onclick="toggleRadio('trap')">RECORD<br>TRAP</div>
+    <div id="btn-club" class="radio-btn r-left" onclick="playRadio('club', 'https://ep256.hostingradio.ru:8052/europaplus256.mp3')">CLUB</div>
+    <div id="btn-trap" class="radio-btn r-right" onclick="playRadio('trap', 'https://dfm.hostingradio.ru/dfm96.mp3')">TRAP</div>
 
     <div id="auth-screen">
-        <div id="logo" style="color:var(--neon); font-size:24px; margin-bottom:20px; text-shadow:0 0 10px var(--neon)">Sontan System</div>
+        <div id="logo" style="color:var(--neon); margin-bottom:15px;">Sontan System</div>
         <div class="v-container">
             <video id="video" autoplay muted playsinline></video>
-            <canvas id="canvas" width="280" height="280"></canvas>
-            <div id="scan-line"></div>
+            <canvas id="canvas" width="260" height="260"></canvas>
         </div>
-        <button class="btn-send" style="margin-top:20px" onclick="initScanner()">SCAN FACE</button>
+        <button class="btn-send" style="margin-top:15px" onclick="initScanner()">START SCAN</button>
     </div>
 
     <div id="chat-ui">
         <div id="messages"></div>
         <div class="input-area">
-            <input type="text" id="m-input" placeholder="Написать...">
+            <input type="text" id="m-input" placeholder="Message...">
             <button class="btn-send" onclick="sendMsg()">></button>
         </div>
     </div>
@@ -75,81 +68,62 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
         let myName = "Serega";
+        let currentAudio = null;
 
-        // РАДИО
-        const streams = {
-            club: new Audio('https://air.radiorecord.ru:805/club_320'),
-            trap: new Audio('https://air.radiorecord.ru:805/trap_320')
-        };
-
-        function toggleRadio(type) {
-            const btn = document.getElementById('btn-' + type);
-            if (streams[type].paused) {
-                Object.values(streams).forEach(s => { s.pause(); s.currentTime = 0; });
-                document.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('active'));
-                streams[type].play();
-                btn.classList.add('active');
-            } else {
-                streams[type].pause();
+        function playRadio(id, url) {
+            const btn = document.getElementById('btn-' + id);
+            if (currentAudio && !currentAudio.paused && currentAudio.src === url) {
+                currentAudio.pause();
                 btn.classList.remove('active');
+            } else {
+                if (currentAudio) currentAudio.pause();
+                document.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('active'));
+                currentAudio = new Audio(url);
+                currentAudio.play();
+                btn.classList.add('active');
             }
         }
 
-        // КОСМОС
+        // Легкие звезды
         const bg = document.getElementById('space-bg');
-        for(let i=0; i<80; i++) {
+        for(let i=0; i<40; i++) {
             let s = document.createElement('div');
             s.className = 'star';
-            s.style.left = Math.random()*100+'%';
-            s.style.top = Math.random()*100+'%';
-            s.style.width = s.style.height = Math.random()*2+'px';
-            s.style.setProperty('--d', Math.random()*3+2+'s');
-            bg.appendChild(s);
+            s.style.left = Math.random()*100+'%'; s.style.top = Math.random()*100+'%';
+            s.style.width = s.style.height = '1px'; bg.appendChild(s);
         }
 
-        // БИОМЕТРИЯ
         async function initScanner() {
             const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-            ]);
+            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            video.onloadedmetadata = () => { video.play(); checkFaces(); };
+            document.getElementById('video').srcObject = stream;
+            checkFaces();
         }
 
         async function checkFaces() {
             const { data: users } = await supabaseClient.from('allowed_faces').select('*');
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            const line = document.getElementById('scan-line');
-            const displaySize = { width: 280, height: 280 };
+            const displaySize = { width: 260, height: 260 };
             faceapi.matchDimensions(canvas, displaySize);
 
             setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
                 const resized = faceapi.resizeResults(detections, displaySize);
                 const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, 280, 280);
-
+                ctx.clearRect(0, 0, 260, 260);
                 if (resized.length > 0) {
-                    line.style.opacity = "1";
-                    line.style.animation = "scanAnim 2s infinite linear";
-                    faceapi.draw.drawFaceLandmarks(canvas, resized); // Линии на лице
-
+                    faceapi.draw.drawFaceLandmarks(canvas, resized);
                     resized.forEach(d => {
                         users?.forEach(u => {
                             if (faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor)) < 0.5) {
-                                myName = u.name;
-                                startChat();
+                                myName = u.name; startChat();
                             }
                         });
                     });
                 }
-            }, 200);
+            }, 300); // Реже проверка = меньше лагов
         }
 
         function startChat() {
@@ -158,7 +132,6 @@
             loadMsgs(); listen();
         }
 
-        // ЧАТ И УДАЛЕНИЕ
         async function sendMsg() {
             const i = document.getElementById('m-input');
             if (!i.value) return;
@@ -168,25 +141,23 @@
 
         async function loadMsgs() {
             const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
-            const b = document.getElementById('messages');
-            b.innerHTML = '';
+            const b = document.getElementById('messages'); b.innerHTML = '';
             data?.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'msg';
                 div.innerHTML = `<b>${m.sender_name}:</b><br>${m.content}`;
                 
-                // ЛОГИКА УДЕРЖАНИЯ (Long Press)
                 let timer;
                 div.onpointerdown = () => {
                     timer = setTimeout(async () => {
-                        const action = prompt("1 - Удалить у себя, 2 - Удалить у всех, 0 - Отмена");
-                        if (action === "1") div.remove();
-                        if (action === "2") await supabaseClient.from('messages').delete().eq('id', m.id);
+                        if (confirm("Удалить сообщение для всех?")) {
+                            await supabaseClient.from('messages').delete().eq('id', m.id);
+                        } else if (confirm("Удалить только у себя?")) {
+                            div.remove();
+                        }
                     }, 800);
                 };
                 div.onpointerup = () => clearTimeout(timer);
-                div.onpointerleave = () => clearTimeout(timer);
-
                 b.appendChild(div);
             });
             b.scrollTop = b.scrollHeight;
