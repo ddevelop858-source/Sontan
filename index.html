@@ -3,84 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Pro Fix</title>
+    <title>Sontan System Legacy Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        :root { --neon: #00f2ff; --pink: #ff00ff; --bg: #05070a; }
-        * { transition: all 0.3s ease; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        :root { --neon: #00f2ff; --bg: #05070a; }
+        * { box-sizing: border-box; transition: 0.3s; }
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; height: 100dvh; }
 
-        /* ИНДИКАТОР ОНЛАЙН */
-        #online-counter { position: fixed; top: 20px; left: 20px; z-index: 9999; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--neon); font-size: 12px; display: none; }
-        .dot { display: inline-block; width: 8px; height: 8px; background: #0f0; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 10px #0f0; }
-
-        /* РАДИО И МОЛНИЯ */
-        .radio-zone { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; align-items: center; }
-        .radio-btn { width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--neon); background: rgba(0,0,0,0.9); color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; }
-        .bolt-svg { width: 35px; height: 45px; fill: var(--neon); filter: drop-shadow(0 0 8px var(--neon)); opacity: 0.2; margin-top: -5px; }
-        .spinning { animation: rotateBtn 4s linear infinite; background: var(--neon) !important; color: #000 !important; }
-        .bolt-active { opacity: 1; animation: pulseBolt 1.5s infinite; }
-        @keyframes rotateBtn { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulseBolt { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
-        /* ВХОД */
-        #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; background: var(--bg); }
-        .logo { color: var(--neon); font-size: 28px; font-weight: bold; letter-spacing: 4px; margin-bottom: 30px; cursor: pointer; text-shadow: 0 0 15px var(--neon); }
-        .v-container { position: relative; width: 280px; height: 280px; border-radius: 50%; overflow: hidden; border: 2px solid var(--neon); }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        canvas { position: absolute; top: 0; left: 0; }
-
-        /* ЧАТ (БЕЗ ОТСТУПА) */
-        #chat-ui { display: none; height: 100dvh; flex-direction: column; opacity: 0; }
-        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 150px; }
-        .msg { background: #161b22; padding: 12px 16px; border-radius: 18px; border-left: 4px solid var(--neon); align-self: flex-start; max-width: 85%; }
-        .msg b { color: var(--neon); font-size: 11px; display: block; margin-bottom: 5px; text-transform: uppercase; }
-        .msg img, .msg video { max-width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid #333; display: block; }
-
-        /* ПАНЕЛЬ ВВОДА И ПРЕДПРОСМОТР */
-        .input-area { position: fixed; bottom: 0; width: 100%; background: rgba(5, 7, 10, 0.95); border-top: 1px solid #1a1a1a; z-index: 1000; display: flex; flex-direction: column; }
-        #preview-box { display: none; padding: 10px; background: #111; border-bottom: 1px solid #333; align-items: center; gap: 10px; }
-        #preview-box img, #preview-box video { height: 60px; border-radius: 8px; border: 1px solid var(--neon); }
-        .input-row { padding: 15px; display: flex; gap: 10px; align-items: center; }
-        .input-field { flex: 1; background: #111; border: 1px solid #333; color: white; padding: 12px 20px; border-radius: 25px; }
-        .btn-circle { background: var(--neon); color: black; border: none; width: 45px; height: 45px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        /* ОНЛАЙН СТАТУС */
+        #status { position: fixed; top: 20px; left: 20px; z-index: 999; font-size: 12px; color: var(--neon); background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid var(--neon); }
         
-        #reg-hidden { display: none; background: var(--pink); color: white; padding: 15px 35px; border-radius: 30px; border: none; margin-top: 25px; font-weight: bold; }
+        /* РАДИО И МОЛНИЯ */
+        .radio-box { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; align-items: center; }
+        .radio-btn { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--neon); background: #000; color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 9px; cursor: pointer; text-align: center; font-weight: bold; }
+        .bolt { width: 30px; height: 40px; fill: var(--neon); opacity: 0.2; filter: drop-shadow(0 0 5px var(--neon)); }
+        .spinning { animation: rotate 4s linear infinite; background: var(--neon) !important; color: #000 !important; }
+        .active-bolt { opacity: 1; animation: flash 1.5s infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes flash { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        /* ЭКРАН ВХОДА */
+        #auth { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .v-ring { width: 280px; height: 280px; border-radius: 50%; border: 2px solid var(--neon); overflow: hidden; position: relative; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        canvas { position: absolute; inset: 0; }
+
+        /* ЧАТ */
+        #chat { display: none; height: 100dvh; flex-direction: column; }
+        #msgs { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 140px; }
+        .m-box { background: #161b22; padding: 12px; border-radius: 15px; border-left: 3px solid var(--neon); max-width: 85%; align-self: flex-start; }
+        .m-box b { color: var(--neon); font-size: 10px; display: block; margin-bottom: 5px; }
+        .m-box img, .m-box video { max-width: 100%; border-radius: 10px; margin-top: 8px; }
+
+        /* ВВОД С ПРЕДПРОСМОТРОМ */
+        .bar { position: fixed; bottom: 0; width: 100%; background: rgba(5,7,10,0.95); border-top: 1px solid #222; z-index: 999; }
+        #preview { display: none; padding: 10px; background: #111; border-bottom: 1px solid #333; align-items: center; gap: 10px; }
+        #preview img, #preview video { height: 50px; border-radius: 5px; border: 1px solid var(--neon); }
+        .row { display: flex; padding: 15px; gap: 10px; align-items: center; }
+        input { flex: 1; background: #111; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 20px; }
+        .btn { width: 45px; height: 45px; border-radius: 50%; background: var(--neon); border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-    <div id="online-counter"><span class="dot"></span> В СЕТИ: <span id="count">0</span></div>
+    <div id="status">В СЕТИ: <span id="online">0</span></div>
 
-    <div class="radio-zone">
-        <div class="radio-btn" id="radioBtn" onclick="toggleRadio()">EUROPA<br>PLUS</div>
-        <svg class="bolt-svg" id="boltIcon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    <div class="radio-box">
+        <div class="radio-btn" id="radBtn" onclick="toggleRad()">EUROPA<br>PLUS</div>
+        <svg class="bolt" id="bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
     </div>
 
-    <div id="auth-screen">
-        <div class="logo" ondblclick="checkSecret()">SONTAN SYSTEM</div>
-        <div class="v-container">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay" width="280" height="280"></canvas>
+    <div id="auth">
+        <h1 style="color:var(--neon); letter-spacing:3px;">SONTAN SYSTEM</h1>
+        <div class="v-ring">
+            <video id="webcam" autoplay muted playsinline></video>
+            <canvas id="cv"></canvas>
         </div>
-        <button onclick="startFaceID()" style="margin-top: 35px; padding: 16px 50px; background: var(--neon); border: none; border-radius: 35px; font-weight: bold; cursor: pointer;">ВОЙТИ</button>
-        <button id="reg-hidden" onclick="doRegister()">РЕГИСТРАЦИЯ</button>
+        <button onclick="startAuth()" style="margin-top:30px; padding:15px 50px; border-radius:30px; background:var(--neon); border:none; font-weight:bold;">ВОЙТИ</button>
     </div>
 
-    <div id="chat-ui">
-        <div id="messages"></div>
-        <div class="input-area">
-            <div id="preview-box">
-                <div id="file-view"></div>
-                <div style="font-size: 10px; color: var(--neon);">Файл выбран. Нажмите ➤ для отправки</div>
-                <button onclick="clearFile()" style="background:none; border:none; color:red; margin-left:auto;">✕</button>
+    <div id="chat">
+        <div id="msgs"></div>
+        <div class="bar">
+            <div id="preview">
+                <div id="thumb"></div>
+                <span style="font-size:10px; color:var(--neon)">Файл готов</span>
+                <button onclick="clearFile()" style="margin-left:auto; background:none; border:none; color:red">✕</button>
             </div>
-            <div class="input-row">
-                <button class="btn-circle" onclick="document.getElementById('fileIn').click()">+</button>
-                <input type="file" id="fileIn" hidden accept="image/*,video/*" onchange="handleFile(this)">
-                <input type="text" id="msgInput" class="input-field" placeholder="Сообщение...">
-                <button class="btn-circle" onclick="sendAll()">➤</button>
+            <div class="row">
+                <button class="btn" onclick="document.getElementById('fIn').click()">+</button>
+                <input type="file" id="fIn" hidden accept="image/*,video/*" onchange="showPreview(this)">
+                <input type="text" id="mIn" placeholder="Сообщение...">
+                <button class="btn" onclick="send()">➤</button>
             </div>
         </div>
     </div>
@@ -90,36 +85,35 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const supabase = window.supabase.createClient(SB_URL, SB_KEY);
         
-        let myUser = "Serega";
-        let radio = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
-        let selectedFile = null;
+        let user = "Гость";
+        let audio = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
+        let fileObj = null;
 
-        function toggleRadio() {
-            const b = document.getElementById('radioBtn');
-            const l = document.getElementById('boltIcon');
-            if (radio.paused) { radio.play(); b.classList.add('spinning'); l.classList.add('bolt-active'); }
-            else { radio.pause(); b.classList.remove('spinning'); l.classList.remove('bolt-active'); }
+        function toggleRad() {
+            const b = document.getElementById('radBtn');
+            const l = document.getElementById('bolt');
+            if (audio.paused) { audio.play(); b.classList.add('spinning'); l.classList.add('active-bolt'); }
+            else { audio.pause(); b.classList.remove('spinning'); l.classList.remove('active-bolt'); }
         }
 
-        function checkSecret() { if(prompt("Пароль:") === "Seregasib") document.getElementById('reg-hidden').style.display = 'block'; }
-
-        async function startFaceID() {
-            const URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL)]);
+        async function startAuth() {
+            const MODEL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL)]);
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            document.getElementById('video').srcObject = stream;
-            const { data: users } = await supabase.from('allowed_faces').select('*');
-            const v = document.getElementById('video');
-            const c = document.getElementById('overlay');
+            document.getElementById('webcam').srcObject = stream;
+            const { data: db } = await supabase.from('allowed_faces').select('*');
+            const v = document.getElementById('webcam');
+            const c = document.getElementById('cv');
             faceapi.matchDimensions(c, { width: 280, height: 280 });
+
             const loop = setInterval(async () => {
                 const dec = await faceapi.detectAllFaces(v).withFaceLandmarks().withFaceDescriptors();
                 if (dec.length > 0) {
                     faceapi.draw.drawFaceLandmarks(c, faceapi.resizeResults(dec, { width: 280, height: 280 }));
                     dec.forEach(d => {
-                        users?.forEach(u => {
+                        db?.forEach(u => {
                             if (faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
-                                myUser = u.name; clearInterval(loop); enterChat();
+                                user = u.name; clearInterval(loop); openChat();
                             }
                         });
                     });
@@ -127,78 +121,62 @@
             }, 600);
         }
 
-        function enterChat() {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('online-counter').style.display = 'block';
-            document.getElementById('chat-ui').style.display = 'flex';
-            document.getElementById('chat-ui').style.opacity = '1';
-            const channel = supabase.channel('presence-room', { config: { presence: { key: myUser } } });
-            channel.on('presence', { event: 'sync' }, () => {
-                document.getElementById('count').innerText = Object.keys(channel.presenceState()).length;
-            }).subscribe(async (s) => { if (s === 'SUBSCRIBED') await channel.track({ online_at: new Date() }); });
-            loadMsgs();
-            supabase.channel('msgs').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMsgs).subscribe();
+        function openChat() {
+            document.getElementById('auth').style.display = 'none';
+            document.getElementById('chat').style.display = 'flex';
+            const chan = supabase.channel('online').on('presence', {event:'sync'}, () => {
+                document.getElementById('online').innerText = Object.keys(chan.presenceState()).length;
+            }).subscribe(async (s) => { if(s==='SUBSCRIBED') await chan.track({user}); });
+            load();
+            supabase.channel('db').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, load).subscribe();
         }
 
-        async function loadMsgs() {
+        async function load() {
             const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
-            const box = document.getElementById('messages');
+            const box = document.getElementById('msgs');
             box.innerHTML = '';
             data?.forEach(m => {
-                const div = document.createElement('div');
-                div.className = 'msg';
-                let html = `<b>${m.sender_name}</b>`;
-                if(m.media_url) html += m.media_url.match(/\.(mp4|mov|webm)$/i) ? `<video src="${m.media_url}" controls playsinline></video>` : `<img src="${m.media_url}">`;
-                if(m.content) html += `<div>${m.content}</div>`;
-                div.innerHTML = html;
-                div.oncontextmenu = (e) => { e.preventDefault(); if(confirm("Удалить?")) supabase.from('messages').delete().eq('id', m.id).then(loadMsgs); };
-                box.appendChild(div);
+                const d = document.createElement('div');
+                d.className = 'm-box';
+                let content = `<b>${m.sender_name}</b>`;
+                if(m.media_url) content += m.media_url.includes('mp4') ? `<video src="${m.media_url}" controls playsinline></video>` : `<img src="${m.media_url}">`;
+                if(m.content) content += `<div>${m.content}</div>`;
+                d.innerHTML = content;
+                d.onclick = () => { if(confirm("Удалить?")) supabase.from('messages').delete().eq('id', m.id); };
+                box.appendChild(d);
             });
             box.scrollTop = box.scrollHeight;
         }
 
-        // ОБРАБОТКА ВЫБОРА ФАЙЛА
-        function handleFile(el) {
-            selectedFile = el.files[0];
-            if (!selectedFile) return;
-            const reader = new FileReader();
-            const preview = document.getElementById('preview-box');
-            const view = document.getElementById('file-view');
-            preview.style.display = 'flex';
-            view.innerHTML = selectedFile.type.startsWith('video') ? `<video src="${URL.createObjectURL(selectedFile)}" muted></video>` : `<img src="${URL.createObjectURL(selectedFile)}">`;
+        function showPreview(el) {
+            fileObj = el.files[0];
+            if (!fileObj) return;
+            document.getElementById('preview').style.display = 'flex';
+            document.getElementById('thumb').innerHTML = fileObj.type.includes('video') ? `<video src="${URL.createObjectURL(fileObj)}" muted></video>` : `<img src="${URL.createObjectURL(fileObj)}">`;
         }
 
         function clearFile() {
-            selectedFile = null;
-            document.getElementById('fileIn').value = '';
-            document.getElementById('preview-box').style.display = 'none';
+            fileObj = null;
+            document.getElementById('fIn').value = '';
+            document.getElementById('preview').style.display = 'none';
         }
 
-        async function sendAll() {
-            const input = document.getElementById('msgInput');
+        async function send() {
+            const input = document.getElementById('mIn');
             const txt = input.value;
             let url = null;
 
-            if (selectedFile) {
-                const path = Date.now() + "_" + selectedFile.name;
-                const { data, error } = await supabase.storage.from('uploads').upload(path, selectedFile);
-                if (!error) {
-                    const { data: res } = supabase.storage.from('uploads').getPublicUrl(path);
-                    url = res.publicUrl;
-                }
+            if (fileObj) {
+                const path = Date.now() + "_" + fileObj.name;
+                const { data } = await supabase.storage.from('uploads').upload(path, fileObj);
+                if (data) url = supabase.storage.from('uploads').getPublicUrl(path).data.publicUrl;
                 clearFile();
             }
 
             if (txt || url) {
-                await supabase.from('messages').insert([{ sender_name: myUser, content: txt, media_url: url }]);
+                await supabase.from('messages').insert([{ sender_name: user, content: txt, media_url: url }]);
                 input.value = '';
             }
-        }
-
-        async function doRegister() {
-            const name = prompt("Имя:");
-            const dec = await faceapi.detectSingleFace(document.getElementById('video')).withFaceLandmarks().withFaceDescriptor();
-            if (dec && name) { await supabase.from('allowed_faces').insert([{ name, face_descriptor: Array.from(dec.descriptor) }]); alert("Ок!"); }
         }
     </script>
 </body>
