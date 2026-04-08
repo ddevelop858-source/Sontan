@@ -3,539 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Smooth Pro</title>
+    <title>Sontan System Final</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        :root { --neon: #00f2ff; --pink: #ff00ff; --bg: #05070a; --msg-bg: #1a1f29; }
-        
-        * { transition: all 0.3s ease; box-sizing: border-box; }
+        :root { --neon: #00f2ff; --pink: #ff00ff; --bg: #05070a; }
+        * { transition: all 0.3s ease; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; height: 100dvh; }
 
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; overflow: hidden; touch-action: none; height: 100dvh; }
-        
-        /* КНОПКА РАДИО С ВРАЩЕНИЕМ */
-        .radio-container {
-            position: fixed; top: 20px; right: 20px; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-        }
-
+        /* КНОПКА РАДИО И ВРАЩЕНИЕ */
+        .radio-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; align-items: center; }
         .radio-btn { 
-            width: 65px; height: 65px; 
-            border-radius: 50%; border: 2px solid var(--neon); 
-            background: rgba(0,0,0,0.8); color: var(--neon);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: bold; 
+            width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--neon); 
+            background: rgba(0,0,0,0.8); color: var(--neon); display: flex; align-items: center; 
+            justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center;
             box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
-            cursor: pointer; text-align: center;
-            position: relative; overflow: hidden;
         }
+        .spinning { animation: rotate 4s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .active-btn { background: var(--neon) !important; color: black !important; box-shadow: 0 0 30px var(--neon) !important; }
 
-        /* Анимация вращения при активе */
-        .active .spin-logo { animation: rotateLogo 4s linear infinite; }
-        .active { box-shadow: 0 0 30px var(--neon) !important; background: rgba(0, 242, 255, 0.1); }
+        #lightning-visualizer { width: 50px; height: 80px; opacity: 0; margin-top: 5px; pointer-events: none; }
 
-        @keyframes rotateLogo { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* ЦВЕТОМУЗЫКА МОЛНИЯ */
-        #lightning-visualizer {
-            width: 40px; height: 150px;
-            opacity: 0; filter: drop-shadow(0 0 5px var(--neon));
-        }
-        .active + #lightning-visualizer { opacity: 1; }
-
-        /* ЭКРАНЫ */
-        #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; background: var(--bg); padding: 20px; }
-        .v-container { position: relative; width: 280px; height: 280px; border-radius: 50%; overflow: hidden; border: 2px solid var(--neon); box-shadow: 0 0 20px rgba(0,242,255,0.2); }
+        /* ЭКРАН ВХОДА */
+        #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 100; opacity: 1; }
+        .v-container { position: relative; width: 260px; height: 260px; border-radius: 50%; overflow: hidden; border: 3px solid var(--neon); box-shadow: 0 0 20px var(--neon); }
         video { width: 100%; height: 100%; object-fit: cover; }
-        #canvas { position: absolute; top: 0; left: 0; z-index: 1001; pointer-events: none; }
+        canvas { position: absolute; top: 0; left: 0; }
 
-        #chat-ui { opacity: 0; display: none; height: 100%; flex-direction: column; }
-        
-        /* СООБЩЕНИЯ */
-        #messages { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 90px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-        .msg { background: var(--msg-bg); padding: 12px 16px; border-radius: 18px; border-left: 4px solid transparent; align-self: flex-start; max-width: 85%; position: relative; word-wrap: break-word; webkit-touch-callout: none; user-select: none; }
-        .msg.my-msg { border-left-color: var(--neon); background: #1e2533; }
-        .msg b { color: var(--neon); font-size: 0.9em; display: block; margin-bottom: 4px; }
-        .msg-content { line-height: 1.4; }
-        
-        /* Медиа в сообщениях */
-        .msg-media { max-width: 100%; max-height: 250px; border-radius: 10px; margin-top: 8px; display: block; cursor: pointer; }
+        /* ИНТЕРФЕЙС ЧАТА */
+        #chat-ui { display: none; height: 100dvh; flex-direction: column; opacity: 0; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 100px; }
+        .msg { background: #1a1f29; padding: 12px; border-radius: 15px; max-width: 85%; border-left: 4px solid var(--neon); align-self: flex-start; position: relative; }
+        .msg b { color: var(--neon); font-size: 12px; display: block; margin-bottom: 4px; }
+        .msg-media { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
 
-        /* КОНТЕКСТНОЕ МЕНЮ (УДАЛЕНИЕ) */
-        #context-menu {
-            display: none; position: fixed; background: #161b22; border: 1px solid #333;
-            border-radius: 12px; z-index: 10000; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            overflow: hidden; width: 180px;
-        }
-        .menu-item { padding: 14px 16px; cursor: pointer; color: white; font-size: 14px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; }
+        /* ПОЛЕ ВВОДА */
+        .input-area { position: fixed; bottom: 0; width: 100%; padding: 15px; background: #161b22; display: flex; gap: 10px; align-items: center; border-top: 1px solid #333; }
+        input[type="text"] { flex: 1; background: #0d1117; border: 1px solid var(--neon); color: white; padding: 12px; border-radius: 10px; outline: none; }
+        .btn-action { background: var(--neon); color: black; border: none; padding: 12px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-pink { background: var(--pink); color: white; display: none; margin-top: 15px; padding: 12px 25px; border-radius: 10px; border: none; font-weight: bold; }
+
+        /* МЕНЮ УДАЛЕНИЯ */
+        #context-menu { display: none; position: fixed; background: #222; border: 1px solid var(--neon); border-radius: 12px; z-index: 10000; overflow: hidden; min-width: 150px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .menu-item { padding: 12px 15px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #333; }
         .menu-item:last-child { border-bottom: none; }
-        .menu-item:active { background: #222; }
-        .menu-item.del-all { color: var(--pink); }
-
-        /* ИНПУТ ЗОНА */
-        .input-area { position: fixed; bottom: 0; width: 100%; padding: 12px; background: #10141b; display: flex; align-items: flex-end; gap: 10px; border-top: 1px solid #222; }
-        .input-wrapper { flex: 1; position: relative; background: #0d1117; border: 1px solid #333; border-radius: 20px; display: flex; align-items: center; padding: 0 10px; }
-        .input-wrapper:focus-within { border-color: var(--neon); box-shadow: 0 0 10px rgba(0,242,255,0.1); }
-        
-        textarea { flex: 1; background: transparent; border: none; color: white; padding: 10px; outline: none; resize: none; font-family: sans-serif; font-size: 15px; max-height: 100px; overflow-y: auto; }
-        
-        .btn-icon { background: transparent; border: none; color: #888; font-size: 20px; padding: 10px; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:active { background: rgba(255,255,255,0.1); color: white; }
-        .btn-send { color: var(--neon); font-weight: bold; }
-        
-        #file-input { display: none; }
-        
-        /* Предпросмотр перед отправкой */
-        #preview-area { display: none; padding: 10px; background: #161b22; border-top: 1px solid #222; align-items: center; gap: 10px; }
-        #preview-msg { max-height: 60px; max-width: 60px; border-radius: 5px; object-fit: cover; }
-        #cancel-preview { color: var(--pink); cursor: pointer; font-weight: bold; padding: 10px; }
-
-        .btn-reg { background: var(--pink); color: white; display: none; padding: 12px; border-radius: 10px; margin-top: 15px; border: none; font-weight: bold; width: 100%; cursor: pointer;}
-        
-        /* Лоадер загрузки файла */
-        #upload-loader { display: none; position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; color: var(--neon); z-index: 10001; font-size: 12px; border: 1px solid var(--neon); }
-
+        .menu-item:active { background: #333; }
     </style>
 </head>
 <body>
 
     <div class="radio-container">
         <div class="radio-btn" id="radioMain" onclick="toggleRadio()">
-            <div class="spin-logo">EUROPA<br>PLUS</div>
+            <div id="radioInner">EUROPA<br>PLUS</div>
         </div>
-        <svg id="lightning-visualizer" viewBox="0 0 50 150" preserveAspectRatio="none">
-            <path id="lightning-path" d="M25,0 L40,40 L20,50 L45,90 L15,100 L30,150" stroke="#00f2ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg id="lightning-visualizer" viewBox="0 0 50 100">
+            <path id="bolt" d="M25,0 L35,30 L15,40 L40,70 L10,80 L30,100" stroke="#00f2ff" fill="none" stroke-width="2"/>
         </svg>
     </div>
 
-    <div id="context-menu">
-        <div class="menu-item del-me" onclick="deleteMessage('me')">✋ Удалить у себя</div>
-        <div class="menu-item del-all" onclick="deleteMessage('all')">💥 Удалить у всех</div>
-        <div class="menu-item" onclick="closeContextMenu()">❌ Отмена</div>
-    </div>
-    
-    <div id="upload-loader">Загрузка медиа...</div>
-
     <div id="auth-screen">
-        <div id="logo" style="color:var(--neon); font-size: 28px; margin-bottom: 25px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;" ondblclick="unlockReg()">Sontan</div>
+        <div id="logo" style="color:var(--neon); font-size: 24px; font-weight: bold; margin-bottom: 20px; letter-spacing: 3px;" ondblclick="unlockAdmin()">SONTAN SYSTEM</div>
         <div class="v-container">
             <video id="video" autoplay muted playsinline></video>
-            <canvas id="canvas" width="280" height="280"></canvas>
+            <canvas id="canvas" width="260" height="260"></canvas>
         </div>
-        <button onclick="initScanner()" style="margin-top: 30px; padding: 16px 40px; background: var(--neon); border: none; border-radius: 12px; font-weight: bold; color: black; font-size: 16px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,242,255,0.2);">ЗАПУСТИТЬ СКАНЕР</button>
-        <button id="reg-btn" class="btn-reg" onclick="registerGuest()">📝 РЕГИСТРАЦИЯ ГОСТЯ</button>
+        <button class="btn-action" style="margin-top: 25px;" onclick="initSecurity()">АКТИВИРОВАТЬ ВХОД</button>
+        <button id="reg-btn" class="btn-pink" onclick="registerNewUser()">РЕГИСТРАЦИЯ ЛИЦА</button>
     </div>
 
     <div id="chat-ui">
         <div id="messages"></div>
-        
-        <div id="preview-area">
-            <img id="preview-img" style="display:none">
-            <video id="preview-video" style="display:none" muted></video>
-            <div id="preview-name" style="flex:1; color: #888; font-size:12px; overflow:hidden; text-overflow:ellipsis;">file.ext</div>
-            <div id="cancel-preview" onclick="clearAttachment()">&times;</div>
-        </div>
-
         <div class="input-area">
-            <button class="btn-icon" onclick="triggerFileInput()">&#128206;</button>
-            <input type="file" id="file-input" accept="image/*,video/*" onchange="handleFileSelect(this)">
-            <div class="input-wrapper">
-                <textarea id="m-input" placeholder="Сообщение..." rows="1" oninput="autoHeight(this)"></textarea>
-            </div>
-            <button class="btn-icon btn-send" onclick="sendMsg()">&#10148;</button>
+            <button class="btn-action" onclick="document.getElementById('file-input').click()">+</button>
+            <input type="file" id="file-input" hidden accept="image/*,video/*" onchange="uploadAndSend(this)">
+            <input type="text" id="m-input" placeholder="Введите сообщение...">
+            <button class="btn-action" onclick="sendMessage()">➤</button>
         </div>
     </div>
 
+    <div id="context-menu">
+        <div class="menu-item" style="color: #ff4444;" onclick="deleteForAll()">Удалить у всех</div>
+        <div class="menu-item" onclick="closeMenu()">Отмена</div>
+    </div>
+
     <script>
-        // КОНФИГУРАЦИЯ SUPABASE
         const SB_URL = 'https://gwegmxznhlmzejqdpykv.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-        
-        let myName = "Гость";
-        let myId = localStorage.getItem('sontan_uid') || `guest_${Date.now()}`;
-        localStorage.setItem('sontan_uid', myId); // Сохраняем уникальный ID устройства
 
+        let myName = "Serega";
+        let currentTargetMsg = null;
         let audio = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
-        let audioContext, analyser, dataArray;
-        let currentContextMenuMsgId = null;
-        let selectedFile = null;
 
-        // --- РАДИО И ЦВЕТОМУЗЫКА (МОЛНИЯ) ---
+        // --- ФУНКЦИИ РАДИО ---
         function toggleRadio() {
+            const inner = document.getElementById('radioInner');
+            const bolt = document.getElementById('lightning-visualizer');
             const btn = document.getElementById('radioMain');
             if (audio.paused) {
-                audio.play().then(() => {
-                    btn.classList.add('active');
-                    startVisualizer();
-                });
+                audio.play();
+                inner.classList.add('spinning');
+                btn.classList.add('active-btn');
+                bolt.style.opacity = '1';
+                animateBolt();
             } else {
                 audio.pause();
-                btn.classList.remove('active');
+                inner.classList.remove('spinning');
+                btn.classList.remove('active-btn');
+                bolt.style.opacity = '0';
             }
         }
 
-        function startVisualizer() {
-            if (audioContext) return; // Ужe запущен
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaElementSource(audio);
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-            analyser.fftSize = 64;
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            drawLightning();
+        function animateBolt() {
+            if(audio.paused) return;
+            const path = document.getElementById('bolt');
+            const shift = () => (Math.random() - 0.5) * 15;
+            path.setAttribute('d', `M25,0 L${35+shift()},30 L${15+shift()},40 L${40+shift()},70 L${10+shift()},80 L30,100`);
+            setTimeout(animateBolt, 80);
         }
 
-        function drawLightning() {
-            if (!analyser || audio.paused) return;
-            requestAnimationFrame(drawLightning);
-            analyser.getByteFrequencyData(dataArray);
-            
-            // Берем средние частоты для "дерганности"
-            const rms = dataArray.slice(4, 12).reduce((a,b)=>a+b, 0) / 8;
-            const intensity = rms / 255; // 0 to 1
-            
-            const path = document.getElementById('lightning-path');
-            const visualizer = document.getElementById('lightning-visualizer');
-
-            if (intensity > 0.1) {
-                // Генерируем ломаную линию
-                let d = "M25,0 ";
-                const steps = 6;
-                for (let i = 1; i <= steps; i++) {
-                    const y = i * (150 / steps);
-                    const deviation = (Math.random() - 0.5) * 50 * intensity; // Отклонение зависит от громкости
-                    const x = 25 + deviation;
-                    d += `L${x.toFixed(1)},${y.toFixed(1)} `;
-                }
-                path.setAttribute('d', d);
-                
-                // Эффекты свечения
-                path.setAttribute('stroke-width', (1 + intensity * 4).toFixed(1));
-                visualizer.style.filter = `drop-shadow(0 0 ${2 + intensity * 15}px var(--neon))`;
-                visualizer.style.opacity = 0.5 + intensity * 0.5;
-            } else {
-                visualizer.style.opacity = 0.1; // Почти гаснет в тишине
-            }
-        }
-
-        // --- АВТОРИЗАЦИЯ И FACE-API ---
-        function unlockReg() {
-            if(prompt("Код доступа:") === "Seregasib") {
+        // --- БЕЗОПАСНОСТЬ И ВХОД ---
+        function unlockAdmin() {
+            if(prompt("Пароль системы:") === "Seregasib") {
                 document.getElementById('reg-btn').style.display = 'block';
             }
         }
 
-        async function initScanner() {
-            const btn = event.target;
-            btn.innerText = "ЗАГРУЗКА МОДЕЛЕЙ...";
-            btn.disabled = true;
+        async function initSecurity() {
             try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('video').srcObject = stream;
+                
                 const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
                 await Promise.all([
                     faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
-                
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('video').srcObject = stream;
-                btn.style.display = 'none';
-                checkFaces();
-            } catch (e) {
-                alert("Ошибка камеры или загрузки моделей. Проверьте HTTPS.");
-                btn.disabled = false;
-                btn.innerText = "ПОПРОБОВАТЬ СНОВА";
+                startFaceScanning();
+            } catch(e) {
+                alert("Ошибка доступа к камере или моделям.");
             }
         }
 
-        async function checkFaces() {
-            const { data: users } = await supabaseClient.from('allowed_faces').select('*');
+        async function startFaceScanning() {
             const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            const displaySize = { width: 280, height: 280 };
-            faceapi.matchDimensions(canvas, displaySize);
-
-            const timerId = setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
-                const resized = faceapi.resizeResults(detections, displaySize);
-                canvas.getContext('2d').clearRect(0, 0, 280, 280);
-                
-                if (resized.length > 0) {
-                    faceapi.draw.drawFaceLandmarks(canvas, resized);
-                    
-                    for(const d of resized) {
-                        for(const u of (users || [])) {
-                            const dist = faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor));
-                            if (dist < 0.45) { // Порог распознавания
-                                myName = u.name;
-                                clearInterval(timerId);
-                                // Останавливаем камеру
-                                video.srcObject.getTracks().forEach(track => track.stop());
-                                switchToChat();
-                                return;
-                            }
+            const { data: users } = await supabaseClient.from('allowed_faces').select('*');
+            
+            const scanInterval = setInterval(async () => {
+                const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+                if (detection && users) {
+                    for (let u of users) {
+                        const dist = faceapi.euclideanDistance(detection.descriptor, new Float32Array(u.face_descriptor));
+                        if (dist < 0.45) {
+                            myName = u.name;
+                            clearInterval(scanInterval);
+                            enterChat();
                         }
                     }
                 }
-            }, 600);
+            }, 800);
         }
 
-        function switchToChat() {
-            const auth = document.getElementById('auth-screen');
+        async function registerNewUser() {
+            const name = prompt("Имя нового пользователя:");
+            if(!name) return;
+            const video = document.getElementById('video');
+            const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+            if(detection) {
+                await supabaseClient.from('allowed_faces').insert([{ name: name, face_descriptor: Array.from(detection.descriptor) }]);
+                alert("Лицо сохранено в базу.");
+            }
+        }
+
+        function enterChat() {
+            document.getElementById('auth-screen').style.display = 'none';
             const chat = document.getElementById('chat-ui');
-            auth.style.opacity = '0';
-            setTimeout(() => {
-                auth.style.display = 'none';
-                chat.style.display = 'flex';
-                setTimeout(() => chat.style.opacity = '1', 50);
-                loadMsgs(); listen();
-            }, 500);
+            chat.style.display = 'flex';
+            setTimeout(() => chat.style.opacity = '1', 50);
+            loadHistory();
+            subscribeToUpdates();
         }
 
-        async function registerGuest() {
-            const name = prompt("Введите имя для регистрации:");
-            if (!name) return;
-            const detect = await faceapi.detectSingleFace(document.getElementById('video')).withFaceLandmarks().withFaceDescriptor();
-            if (detect) {
-                const { error } = await supabaseClient.from('allowed_faces').insert([{ name: name, face_descriptor: Array.from(detect.descriptor) }]);
-                if(!error) alert("Успешно! Теперь сканируйте лицо для входа.");
-                else alert("Ошибка БД: " + error.message);
-            } else {
-                alert("Лицо не обнаружено в кадре.");
-            }
-        }
-
-        // --- РАБОТА С ФАЙЛАМИ ---
-        function triggerFileInput() { document.getElementById('file-input').click(); }
-
-        function handleFileSelect(input) {
-            const file = input.files[0];
-            if (!file) return;
-            if (file.size > 10 * 1024 * 1024) { alert("Файл слишком большой (макс 10МБ)"); input.value=''; return; }
-            
-            selectedFile = file;
-            const reader = new FileReader();
-            
-            document.getElementById('preview-area').style.display = 'flex';
-            document.getElementById('preview-name').innerText = file.name;
-
-            const pImg = document.getElementById('preview-img');
-            const pVid = document.getElementById('preview-video');
-            pImg.style.display = pVid.style.display = 'none';
-
-            if (file.type.startsWith('image/')) {
-                reader.onload = e => { pImg.src = e.target.result; pImg.style.display = 'block'; };
-                reader.readAsDataURL(file);
-            } else if (file.type.startsWith('video/')) {
-                pVid.src = URL.createObjectURL(file);
-                pVid.style.display = 'block';
-            }
-        }
-
-        function clearAttachment() {
-            selectedFile = null;
-            document.getElementById('file-input').value = '';
-            document.getElementById('preview-area').style.display = 'none';
-            document.getElementById('preview-img').src = '';
-            document.getElementById('preview-video').src = '';
-        }
-
-        async function uploadMedia(file) {
-            document.getElementById('upload-loader').style.display = 'block';
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${myId}_${Date.now()}.${fileExt}`;
-            const filePath = `${fileName}`;
-
-            // ВАЖНО: У вас должен быть создан публичный бакет 'uploads' в Supabase Storage
-            const { data, error } = await supabaseClient.storage
-                .from('uploads')
-                .upload(filePath, file);
-
-            document.getElementById('upload-loader').style.display = 'none';
-            if (error) { console.error('Upload error:', error); alert("Ошибка загрузки файла"); return null; }
-            
-            // Получаем публичную ссылку
-            const { data: urlData } = supabaseClient.storage.from('uploads').getPublicUrl(filePath);
-            return urlData.publicUrl;
-        }
-
-        // --- ЧАТ И СООБЩЕНИЯ ---
-        function autoHeight(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = (textarea.scrollHeight) + 'px';
-        }
-
-        async function sendMsg() {
-            const inp = document.getElementById('m-input');
-            const text = inp.value.trim();
-            if (!text && !selectedFile) return;
-
-            const btnSend = document.querySelector('.btn-send');
-            btnSend.disabled = true; // Блокировка от двойного нажатия
-
-            let mediaUrl = null;
-            let mediaType = null;
-
-            if (selectedFile) {
-                mediaUrl = await uploadMedia(selectedFile);
-                if(!mediaUrl) { btnSend.disabled = false; return; } // Ошибка загрузки
-                mediaType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
-                clearAttachment();
-            }
-
-            // Добавляем user_id_device для идентификации своих сообщений
-            const { error } = await supabaseClient.from('messages').insert([{ 
-                sender_name: myName, 
-                content: text,
-                media_url: mediaUrl,
-                media_type: mediaType,
-                user_id_device: myId // Чтобы знать, какое сообщение наше
-            }]);
-
-            if(error) console.error("Send error:", error);
-
-            inp.value = '';
-            inp.style.height = 'auto'; // Сброс высоты
-            btnSend.disabled = false;
-        }
-
-        async function loadMsgs() {
-            const { data, error } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
-            if(error) return;
-            
+        // --- РАБОТА С СООБЩЕНИЯМИ ---
+        async function loadHistory() {
+            const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
             const box = document.getElementById('messages');
-            const shouldScroll = box.scrollTop + box.clientHeight > box.scrollHeight - 100;
             box.innerHTML = '';
-            
-            data?.forEach(m => {
+            data?.forEach(msg => {
                 const div = document.createElement('div');
-                const isMy = m.user_id_device === myId;
-                div.className = `msg ${isMy ? 'my-msg' : ''}`;
-                div.id = `msg-${m.id}`;
+                div.className = 'msg';
+                let content = `<b>${msg.sender_name}</b>`;
+                if(msg.media_url) content += `<img src="${msg.media_url}" class="msg-media">`;
+                if(msg.content) content += `<div>${msg.content}</div>`;
+                div.innerHTML = content;
                 
-                let html = `<b>${m.sender_name}</b>`;
-                
-                if (m.media_url) {
-                    if (m.media_type === 'image') {
-                        html += `<img src="${m.media_url}" class="msg-media" onclick="openFullMedia('${m.media_url}')">`;
-                    } else if (m.media_type === 'video') {
-                        html += `<video src="${m.media_url}" class="msg-media" controls playsinline></video>`;
-                    }
-                }
-                
-                if(m.content) html += `<div class="msg-content">${m.content.replace(/\n/g, '<br>')}</div>`;
-                
-                div.innerHTML = html;
-                
-                // Долгое нажатие (мобилки) / Правая кнопка (ПК)
-                setupContextMenuEvents(div, m.id, isMy);
-                
+                // Долгое нажатие для меню
+                let timer;
+                div.onmousedown = div.ontouchstart = (e) => {
+                    timer = setTimeout(() => openMenu(e, msg.id), 800);
+                };
+                div.onmouseup = div.ontouchend = () => clearTimeout(timer);
+
                 box.appendChild(div);
             });
-            
-            if(shouldScroll) box.scrollTop = box.scrollHeight;
+            box.scrollTop = box.scrollHeight;
         }
 
-        function openFullMedia(url) { window.open(url, '_blank'); }
+        async function sendMessage() {
+            const input = document.getElementById('m-input');
+            if(!input.value) return;
+            await supabaseClient.from('messages').insert([{ sender_name: myName, content: input.value }]);
+            input.value = '';
+        }
 
-        function listen() {
-            supabaseClient.channel('table_db_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
-                if(payload.eventType === 'DELETE') {
-                    const el = document.getElementById(`msg-${payload.old.id}`);
-                    if(el) el.remove();
-                } else {
-                    loadMsgs();
-                }
+        async function uploadAndSend(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const fileName = Date.now() + "_" + file.name;
+            const { data, error } = await supabaseClient.storage.from('uploads').upload(fileName, file);
+            if(data) {
+                const { data: link } = supabaseClient.storage.from('uploads').getPublicUrl(fileName);
+                await supabaseClient.from('messages').insert([{ sender_name: myName, media_url: link.publicUrl, content: "" }]);
+            }
+        }
+
+        function subscribeToUpdates() {
+            supabaseClient.channel('realtime_msgs').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+                loadHistory();
             }).subscribe();
         }
 
-        // --- УЛУЧШЕННОЕ КОНТЕКСТНОЕ МЕНЮ ---
-        let touchTimer;
-        const menu = document.getElementById('context-menu');
-
-        function setupContextMenuEvents(el, msgId, isMy) {
-            // ПК: Правая кнопка
-            el.addEventListener('contextmenu', e => {
-                e.preventDefault();
-                showContextMenu(e.clientX, e.clientY, msgId, isMy);
-            });
-
-            // Мобилки: Долгое нажатие
-            el.addEventListener('touchstart', e => {
-                touchTimer = setTimeout(() => {
-                    showContextMenu(e.touches[0].clientX, e.touches[0].clientY, msgId, isMy);
-                }, 700); // 0.7 секунды удержание
-            }, {passive: true});
-
-            el.addEventListener('touchend', () => clearTimeout(touchTimer));
-            el.addEventListener('touchmove', () => clearTimeout(touchTimer), {passive: true});
-        }
-
-        function showContextMenu(x, y, msgId, isMy) {
-            currentContextMenuMsgId = msgId;
+        // --- МЕНЮ УДАЛЕНИЯ ---
+        function openMenu(e, id) {
+            currentTargetMsg = id;
+            const menu = document.getElementById('context-menu');
+            const x = e.clientX || e.touches[0].clientX;
+            const y = e.clientY || e.touches[0].clientY;
             menu.style.display = 'block';
-            
-            // Управление пунктами меню
-            const delMeBtn = menu.querySelector('.del-me');
-            const delAllBtn = menu.querySelector('.del-all');
-            
-            if(isMy) {
-                delAllBtn.style.display = 'flex'; // Могу удалить у всех
-                delMeBtn.innerText = '✋ Удалить у себя';
-            } else {
-                delAllBtn.style.display = 'none'; // Чужое не могу удалить у всех
-                delMeBtn.innerText = '✋ Скрыть у себя';
-            }
-
-            // Позиционирование с учетом границ экрана
-            const mw = menu.offsetWidth;
-            const mh = menu.offsetHeight;
-            const sw = window.innerWidth;
-            const sh = window.innerHeight;
-
-            if (x + mw > sw) x = sw - mw - 10;
-            if (y + mh > sh) y = sh - mh - 10;
-            if (x < 10) x = 10;
-            if (y < 10) y = 10;
-
             menu.style.left = x + 'px';
             menu.style.top = y + 'px';
-            
-            document.addEventListener('click', closeContextMenu, { once: true });
         }
 
-        function closeContextMenu() {
-            menu.style.display = 'none';
-            currentContextMenuMsgId = null;
-        }
+        function closeMenu() { document.getElementById('context-menu').style.display = 'none'; }
 
-        async function deleteMessage(mode) {
-            const id = currentContextMenuMsgId;
-            if (!id) return;
-            closeContextMenu();
-
-            if (mode === 'all') {
-                if(!confirm("Удалить это сообщение для ВСЕХ участников?")) return;
-                // Удаляем реально из базы
-                const { error } = await supabaseClient.from('messages').delete().eq('id', id);
-                if(error) alert("Ошибка удаления: " + error.message);
-            } else {
-                // 'me' - просто скрываем элемент визуально для этого юзера (локально)
-                // До перезагрузки страницы. Если нужно навсегда, нужно заводить локальную БД скрытых ID.
-                const el = document.getElementById(`msg-${id}`);
-                if(el) {
-                    el.style.opacity = '0';
-                    el.style.transform = 'scale(0.8)';
-                    setTimeout(() => el.remove(), 300);
-                }
+        async function deleteForAll() {
+            if(currentTargetMsg) {
+                await supabaseClient.from('messages').delete().eq('id', currentTargetMsg);
+                closeMenu();
             }
         }
-        
-        // Закрытие меню при клике мимо, если touchstart не сработал как click
-        window.addEventListener('scroll', closeContextMenu, true);
-
     </script>
 </body>
 </html>
