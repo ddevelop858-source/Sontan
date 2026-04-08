@@ -3,73 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Biometry</title>
+    <title>Sontan System Legacy Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        :root { --neon: #00f2ff; --bg: #05070a; --msg-bg: #1a1f29; }
-        * { transition: all 0.2s ease; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; height: 100dvh; }
+        :root { --neon: #00f2ff; --bg: #05070a; }
+        * { transition: all 0.3s ease; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: white; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; height: 100dvh; }
 
-        /* ИНДИКАТОРЫ */
-        #top-bar { position: fixed; top: 10px; left: 15px; z-index: 1000; font-size: 11px; color: var(--neon); }
+        /* ЭКРАН ВХОДА */
+        #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 9999; }
+        .logo-container { position: relative; margin-bottom: 40px; }
+        .logo-text { font-size: 28px; font-weight: bold; color: var(--neon); letter-spacing: 3px; cursor: pointer; }
+        
+        /* МОЛНИЯ */
+        .lightning { position: absolute; top: -10px; right: -20px; width: 40px; height: 40px; filter: drop-shadow(0 0 5px var(--neon)); }
 
-        /* МАЛЕНЬКОЕ РАДИО */
-        .radio-btn { 
-            position: fixed; top: 15px; right: 15px; z-index: 10001;
-            width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--neon); 
+        .scan-circle { width: 260px; height: 260px; border-radius: 50%; border: 2px solid var(--neon); overflow: hidden; position: relative; box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); }
+        video#cam { width: 100%; height: 100%; object-fit: cover; }
+
+        /* РАДИО */
+        .radio-box { position: fixed; top: 20px; right: 20px; z-index: 10001; cursor: pointer; }
+        .radio-circle { 
+            width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--neon); 
             background: rgba(0,0,0,0.8); color: var(--neon); display: flex; align-items: center; 
-            justify-content: center; font-size: 8px; font-weight: bold; cursor: pointer;
+            justify-content: center; font-size: 10px; font-weight: bold; text-align: center;
         }
-        .spinning { animation: rotate 5s linear infinite; background: var(--neon) !important; color: black !important; }
+        .spinning { animation: rotate 4s linear infinite; box-shadow: 0 0 15px var(--neon); background: var(--neon) !important; color: black !important; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* ЭКРАН ВХОДА С FACE ID */
-        #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 9999; }
-        .logo { font-size: 22px; font-weight: bold; color: var(--neon); margin-bottom: 25px; cursor: pointer; }
-        .v-container { width: 240px; height: 240px; border-radius: 50%; border: 3px solid var(--neon); overflow: hidden; position: relative; box-shadow: 0 0 20px var(--neon); }
-        video#cam { width: 100%; height: 100%; object-fit: cover; }
-        #status-txt { margin-top: 20px; font-size: 13px; color: var(--neon); text-align: center; }
-
-        /* ДИАЛОГИ (КАК В МЕССЕНДЖЕРАХ) */
+        /* ЧАТ (КАК РАНЬШЕ) */
         #chat-ui { display: none; height: 100dvh; flex-direction: column; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; margin-top: 70px; padding-bottom: 110px; }
-        
-        .bubble { 
-            background: var(--msg-bg); padding: 10px 15px; border-radius: 18px; 
-            max-width: 80%; align-self: flex-start; border-bottom-left-radius: 2px;
-            border: 1px solid rgba(0, 242, 255, 0.1);
+        #messages { 
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; 
+            margin-top: 80px; padding-bottom: 120px; scroll-behavior: smooth;
         }
-        .bubble.me { align-self: flex-end; border-bottom-left-radius: 18px; border-bottom-right-radius: 2px; border-right: 3px solid var(--neon); background: #1c222d; }
-        
-        .name { font-size: 10px; color: var(--neon); font-weight: bold; margin-bottom: 3px; display: block; }
-        .media { width: 100%; border-radius: 10px; margin-top: 5px; display: block; border: 1px solid #333; }
-        
-        /* ВВОД */
-        .input-bar { position: fixed; bottom: 0; width: 100%; padding: 15px; background: rgba(13,17,23,0.95); display: flex; gap: 10px; z-index: 1000; }
-        .field { flex: 1; background: #161b22; border: 1px solid #333; color: white; padding: 12px; border-radius: 20px; outline: none; }
-        .btn { background: var(--neon); color: black; border: none; width: 45px; height: 45px; border-radius: 50%; font-weight: bold; }
+        .msg-row { border-left: 2px solid var(--neon); padding-left: 15px; margin-bottom: 5px; }
+        .msg-row b { color: var(--neon); font-size: 12px; display: block; margin-bottom: 5px; text-transform: uppercase; }
+        .msg-text { font-size: 16px; color: #fff; line-height: 1.4; word-break: break-all; }
+        .msg-img { max-width: 90%; border-radius: 8px; margin-top: 10px; border: 1px solid #333; }
+
+        /* ПАНЕЛЬ ВВОДА */
+        .input-bar { position: fixed; bottom: 0; width: 100%; padding: 20px; background: rgba(5,7,10,0.95); display: flex; gap: 15px; z-index: 1000; border-top: 1px solid #1a1a1a; }
+        .input-field { flex: 1; background: transparent; border: 1px solid var(--neon); color: white; padding: 12px 20px; border-radius: 30px; outline: none; }
+        .send-btn { background: var(--neon); color: black; border: none; width: 50px; height: 50px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+
+        #status { margin-top: 25px; color: var(--neon); font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="top-bar">Online: <span id="online-val">1</span></div>
-    <div class="radio-btn" id="radio" onclick="toggleRadio()">RAD<br>IO</div>
+    <div class="radio-box" onclick="toggleRadio()">
+        <div class="radio-circle" id="radBtn">RAD<br>IO</div>
+    </div>
 
     <div id="auth-screen">
-        <div class="logo" onclick="adminAccess()">SONTAN SYSTEM</div>
-        <div class="v-container"><video id="cam" autoplay muted playsinline></video></div>
-        <div id="status-txt">Инициализация биометрии...</div>
-        <button id="reg-btn" style="display:none; margin-top:10px; background:#ff00ff;" class="btn" onclick="registerFace()">+</button>
+        <div class="logo-container">
+            <div class="logo-text" onclick="adm()">SONTAN SYSTEM</div>
+            <svg class="lightning" viewBox="0 0 24 24" fill="none" stroke="#00f2ff" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div class="scan-circle"><video id="cam" autoplay muted playsinline></video></div>
+        <div id="status">Инициализация Face ID...</div>
+        <button id="reg" style="display:none; margin-top:20px; background:#ff00ff;" class="send-btn" onclick="regFace()">+</button>
     </div>
 
     <div id="chat-ui">
         <div id="messages"></div>
         <div class="input-bar">
-            <button class="btn" onclick="document.getElementById('f').click()">+</button>
-            <input type="file" id="f" hidden onchange="upload(this)">
-            <input type="text" id="minput" class="field" placeholder="Сообщение...">
-            <button class="btn" onclick="send()">➤</button>
+            <button class="send-btn" onclick="document.getElementById('fileIn').click()">+</button>
+            <input type="file" id="fileIn" hidden onchange="upload(this)">
+            <input type="text" id="msgIn" class="input-field" placeholder="Введите сообщение...">
+            <button class="send-btn" onclick="send()">➤</button>
         </div>
     </div>
 
@@ -78,53 +82,39 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
-        let myName = "Serega";
-        let clicks = 0;
-        let player = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
+        let myName = "Sergey";
+        let cCount = 0;
+        let audio = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
 
-        // РАБОТА С FACE ID
-        async function initFaceID() {
-            const status = document.getElementById('status-txt');
-            const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            
+        async function init() {
+            const models = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
             await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                faceapi.nets.ssdMobilenetv1.loadFromUri(models),
+                faceapi.nets.faceLandmark68Net.loadFromUri(models),
+                faceapi.nets.faceRecognitionNet.loadFromUri(models)
             ]);
 
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             document.getElementById('cam').srcObject = stream;
-            status.innerText = "Сканирование лица...";
-
-            const { data: users } = await supabase.from('allowed_faces').select('*');
-
+            
+            const { data: list } = await supabase.from('allowed_faces').select('*');
+            
             const scan = setInterval(async () => {
                 const detect = await faceapi.detectSingleFace(document.getElementById('cam')).withFaceLandmarks().withFaceDescriptor();
-                if(detect && users) {
-                    for(let u of users) {
+                if(detect && list) {
+                    list.forEach(u => {
                         const dist = faceapi.euclideanDistance(detect.descriptor, new Float32Array(u.face_descriptor));
                         if(dist < 0.5) {
                             myName = u.name;
                             clearInterval(scan);
-                            status.innerText = "Доступ разрешен: " + myName;
-                            setTimeout(enter, 1000);
+                            enterChat();
                         }
-                    }
+                    });
                 }
             }, 1000);
         }
 
-        async function registerFace() {
-            const name = prompt("Имя для запоминания:");
-            const detect = await faceapi.detectSingleFace(document.getElementById('cam')).withFaceLandmarks().withFaceDescriptor();
-            if(detect && name) {
-                await supabase.from('allowed_faces').insert([{ name: name, face_descriptor: Array.from(detect.descriptor) }]);
-                alert("Лицо " + name + " сохранено навсегда!");
-            }
-        }
-
-        function enter() {
+        function enterChat() {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('chat-ui').style.display = 'flex';
             load();
@@ -136,17 +126,11 @@
             const box = document.getElementById('messages');
             box.innerHTML = '';
             data?.forEach(m => {
-                const isMe = m.sender_name === myName;
                 const d = document.createElement('div');
-                d.className = `bubble ${isMe ? 'me' : ''}`;
-                
-                let html = `<span class="name">${m.sender_name}</span>`;
-                if(m.media_url) {
-                    const isVid = m.media_url.toLowerCase().match(/\.(mp4|mov)$/);
-                    html += isVid ? `<video src="${m.media_url}" class="media" controls></video>` : `<img src="${m.media_url}" class="media">`;
-                }
-                if(m.content) html += `<div>${m.content}</div>`;
-                
+                d.className = 'msg-row';
+                let html = `<b>${m.sender_name}</b>`;
+                if(m.media_url) html += `<img src="${m.media_url}" class="msg-img">`;
+                if(m.content) html += `<div class="msg-text">${m.content}</div>`;
                 d.innerHTML = html;
                 box.appendChild(d);
             });
@@ -154,7 +138,7 @@
         }
 
         async function send() {
-            const i = document.getElementById('minput');
+            const i = document.getElementById('msgIn');
             if(!i.value) return;
             await supabase.from('messages').insert([{ sender_name: myName, content: i.value }]);
             i.value = '';
@@ -162,29 +146,38 @@
 
         async function upload(el) {
             const f = el.files[0];
-            const path = Date.now() + "_" + f.name;
-            const { data } = await supabase.storage.from('uploads').upload(path, f);
+            const name = Date.now() + "_" + f.name;
+            const { data } = await supabase.storage.from('uploads').upload(name, f);
             if(data) {
-                const { data: res } = supabase.storage.from('uploads').getPublicUrl(path);
+                const { data: res } = supabase.storage.from('uploads').getPublicUrl(name);
                 await supabase.from('messages').insert([{ sender_name: myName, media_url: res.publicUrl, content: "" }]);
             }
         }
 
         function toggleRadio() {
-            const b = document.getElementById('radio');
-            if (player.paused) { player.play(); b.classList.add('spinning'); }
-            else { player.pause(); b.classList.remove('spinning'); }
+            const b = document.getElementById('radBtn');
+            if (audio.paused) { audio.play(); b.classList.add('spinning'); }
+            else { audio.pause(); b.classList.remove('spinning'); }
         }
 
-        function adminAccess() {
-            clicks++;
-            if(clicks >= 5) {
-                if(prompt("Code:") === "Seregasib") document.getElementById('reg-btn').style.display = 'block';
-                clicks = 0;
+        function adm() {
+            cCount++;
+            if(cCount >= 5) {
+                if(prompt("Code:") === "Seregasib") document.getElementById('reg').style.display = 'block';
+                cCount = 0;
             }
         }
 
-        window.onload = initFaceID;
+        async function regFace() {
+            const n = prompt("Имя:");
+            const d = await faceapi.detectSingleFace(document.getElementById('cam')).withFaceLandmarks().withFaceDescriptor();
+            if(d && n) {
+                await supabase.from('allowed_faces').insert([{ name: n, face_descriptor: Array.from(d.descriptor) }]);
+                alert("Готово!");
+            }
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
