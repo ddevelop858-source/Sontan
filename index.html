@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Final No-Margin</title>
+    <title>Sontan System Pro Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
@@ -15,37 +15,34 @@
         #online-counter { position: fixed; top: 20px; left: 20px; z-index: 9999; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 20px; border: 1px solid var(--neon); font-size: 12px; display: none; }
         .dot { display: inline-block; width: 8px; height: 8px; background: #0f0; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 10px #0f0; }
 
-        /* БЛОК РАДИО */
+        /* РАДИО И МОЛНИЯ */
         .radio-zone { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; align-items: center; }
-        .radio-btn { 
-            width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--neon); 
-            background: rgba(0,0,0,0.9); color: var(--neon); display: flex; align-items: center; 
-            justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center;
-        }
+        .radio-btn { width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--neon); background: rgba(0,0,0,0.9); color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center; }
         .bolt-svg { width: 35px; height: 45px; fill: var(--neon); filter: drop-shadow(0 0 8px var(--neon)); opacity: 0.2; margin-top: -5px; }
-        
         .spinning { animation: rotateBtn 4s linear infinite; background: var(--neon) !important; color: #000 !important; }
         .bolt-active { opacity: 1; animation: pulseBolt 1.5s infinite; }
         @keyframes rotateBtn { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pulseBolt { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-        /* ВХОД (FACE ID) */
+        /* ВХОД */
         #auth-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; background: var(--bg); }
         .logo { color: var(--neon); font-size: 28px; font-weight: bold; letter-spacing: 4px; margin-bottom: 30px; cursor: pointer; text-shadow: 0 0 15px var(--neon); }
-        .v-container { position: relative; width: 280px; height: 280px; border-radius: 50%; overflow: hidden; border: 2px solid var(--neon); box-shadow: 0 0 30px rgba(0,242,255,0.2); }
+        .v-container { position: relative; width: 280px; height: 280px; border-radius: 50%; overflow: hidden; border: 2px solid var(--neon); }
         video { width: 100%; height: 100%; object-fit: cover; }
         canvas { position: absolute; top: 0; left: 0; }
 
-        /* ИНТЕРФЕЙС ЧАТА */
+        /* ЧАТ (БЕЗ ОТСТУПА) */
         #chat-ui { display: none; height: 100dvh; flex-direction: column; opacity: 0; }
-        /* УБРАН ОТСТУП margin-top */
-        #messages { flex: 1; overflow-y: auto; padding: 20px; padding-top: 20px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 110px; }
+        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 150px; }
         .msg { background: #161b22; padding: 12px 16px; border-radius: 18px; border-left: 4px solid var(--neon); align-self: flex-start; max-width: 85%; }
         .msg b { color: var(--neon); font-size: 11px; display: block; margin-bottom: 5px; text-transform: uppercase; }
         .msg img, .msg video { max-width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid #333; display: block; }
 
-        /* ВВОД */
-        .input-area { position: fixed; bottom: 0; width: 100%; padding: 15px; background: rgba(5, 7, 10, 0.95); display: flex; gap: 10px; border-top: 1px solid #1a1a1a; z-index: 1000; }
+        /* ПАНЕЛЬ ВВОДА И ПРЕДПРОСМОТР */
+        .input-area { position: fixed; bottom: 0; width: 100%; background: rgba(5, 7, 10, 0.95); border-top: 1px solid #1a1a1a; z-index: 1000; display: flex; flex-direction: column; }
+        #preview-box { display: none; padding: 10px; background: #111; border-bottom: 1px solid #333; align-items: center; gap: 10px; }
+        #preview-box img, #preview-box video { height: 60px; border-radius: 8px; border: 1px solid var(--neon); }
+        .input-row { padding: 15px; display: flex; gap: 10px; align-items: center; }
         .input-field { flex: 1; background: #111; border: 1px solid #333; color: white; padding: 12px 20px; border-radius: 25px; }
         .btn-circle { background: var(--neon); color: black; border: none; width: 45px; height: 45px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
@@ -67,27 +64,35 @@
             <video id="video" autoplay muted playsinline></video>
             <canvas id="overlay" width="280" height="280"></canvas>
         </div>
-        <button onclick="startFaceID()" style="margin-top: 35px; padding: 16px 50px; background: var(--neon); border: none; border-radius: 35px; font-weight: bold; cursor: pointer;">ВОЙТИ В СИСТЕМУ</button>
-        <button id="reg-hidden" onclick="doRegister()">РЕГИСТРАЦИЯ ГОСТЯ</button>
+        <button onclick="startFaceID()" style="margin-top: 35px; padding: 16px 50px; background: var(--neon); border: none; border-radius: 35px; font-weight: bold; cursor: pointer;">ВОЙТИ</button>
+        <button id="reg-hidden" onclick="doRegister()">РЕГИСТРАЦИЯ</button>
     </div>
 
     <div id="chat-ui">
         <div id="messages"></div>
         <div class="input-area">
-            <button class="btn-circle" onclick="document.getElementById('fileIn').click()">+</button>
-            <input type="file" id="fileIn" hidden accept="image/*,video/*" onchange="uploadFile(this)">
-            <input type="text" id="msgInput" class="input-field" placeholder="Введите сообщение...">
-            <button class="btn-circle" onclick="sendText()">➤</button>
+            <div id="preview-box">
+                <div id="file-view"></div>
+                <div style="font-size: 10px; color: var(--neon);">Файл выбран. Нажмите ➤ для отправки</div>
+                <button onclick="clearFile()" style="background:none; border:none; color:red; margin-left:auto;">✕</button>
+            </div>
+            <div class="input-row">
+                <button class="btn-circle" onclick="document.getElementById('fileIn').click()">+</button>
+                <input type="file" id="fileIn" hidden accept="image/*,video/*" onchange="handleFile(this)">
+                <input type="text" id="msgInput" class="input-field" placeholder="Сообщение...">
+                <button class="btn-circle" onclick="sendAll()">➤</button>
+            </div>
         </div>
     </div>
 
     <script>
         const SB_URL = 'https://gwegmxznhlmzejqdpykv.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
-        const supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
+        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
         
         let myUser = "Serega";
         let radio = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
+        let selectedFile = null;
 
         function toggleRadio() {
             const b = document.getElementById('radioBtn');
@@ -96,35 +101,25 @@
             else { radio.pause(); b.classList.remove('spinning'); l.classList.remove('bolt-active'); }
         }
 
-        function checkSecret() {
-            if(prompt("Пароль доступа:") === "Seregasib") document.getElementById('reg-hidden').style.display = 'block';
-        }
+        function checkSecret() { if(prompt("Пароль:") === "Seregasib") document.getElementById('reg-hidden').style.display = 'block'; }
 
         async function startFaceID() {
             const URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
             await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL)]);
-            
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             document.getElementById('video').srcObject = stream;
-            
-            const { data: users } = await supabaseClient.from('allowed_faces').select('*');
+            const { data: users } = await supabase.from('allowed_faces').select('*');
             const v = document.getElementById('video');
             const c = document.getElementById('overlay');
-            const size = { width: 280, height: 280 };
-            faceapi.matchDimensions(c, size);
-
+            faceapi.matchDimensions(c, { width: 280, height: 280 });
             const loop = setInterval(async () => {
                 const dec = await faceapi.detectAllFaces(v).withFaceLandmarks().withFaceDescriptors();
-                const res = faceapi.resizeResults(dec, size);
-                c.getContext('2d').clearRect(0,0,280,280);
-                if (res.length > 0) {
-                    faceapi.draw.drawFaceLandmarks(c, res);
-                    res.forEach(d => {
+                if (dec.length > 0) {
+                    faceapi.draw.drawFaceLandmarks(c, faceapi.resizeResults(dec, { width: 280, height: 280 }));
+                    dec.forEach(d => {
                         users?.forEach(u => {
                             if (faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
-                                myUser = u.name;
-                                clearInterval(loop);
-                                enterChat();
+                                myUser = u.name; clearInterval(loop); enterChat();
                             }
                         });
                     });
@@ -135,72 +130,75 @@
         function enterChat() {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('online-counter').style.display = 'block';
-            const chat = document.getElementById('chat-ui');
-            chat.style.display = 'flex';
-            setTimeout(() => chat.style.opacity = '1', 50);
-
-            const channel = supabaseClient.channel('presence-room', { config: { presence: { key: myUser } } });
+            document.getElementById('chat-ui').style.display = 'flex';
+            document.getElementById('chat-ui').style.opacity = '1';
+            const channel = supabase.channel('presence-room', { config: { presence: { key: myUser } } });
             channel.on('presence', { event: 'sync' }, () => {
-                const state = channel.presenceState();
-                document.getElementById('count').innerText = Object.keys(state).length;
-            }).subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() });
-            });
-
-            loadMessages();
-            supabaseClient.channel('msgs').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMessages).subscribe();
+                document.getElementById('count').innerText = Object.keys(channel.presenceState()).length;
+            }).subscribe(async (s) => { if (s === 'SUBSCRIBED') await channel.track({ online_at: new Date() }); });
+            loadMsgs();
+            supabase.channel('msgs').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMsgs).subscribe();
         }
 
-        async function loadMessages() {
-            const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
+        async function loadMsgs() {
+            const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
             const box = document.getElementById('messages');
             box.innerHTML = '';
             data?.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'msg';
                 let html = `<b>${m.sender_name}</b>`;
-                if(m.media_url) {
-                    const isV = m.media_url.toLowerCase().match(/\.(mp4|mov|webm)$/);
-                    html += isV ? `<video src="${m.media_url}" controls playsinline></video>` : `<img src="${m.media_url}">`;
-                }
+                if(m.media_url) html += m.media_url.match(/\.(mp4|mov|webm)$/i) ? `<video src="${m.media_url}" controls playsinline></video>` : `<img src="${m.media_url}">`;
                 if(m.content) html += `<div>${m.content}</div>`;
                 div.innerHTML = html;
-
-                let t;
-                div.addEventListener('touchstart', () => t = setTimeout(async () => {
-                    if(confirm("Удалить это сообщение?")) await supabaseClient.from('messages').delete().eq('id', m.id);
-                }, 1000));
-                div.addEventListener('touchend', () => clearTimeout(t));
-
+                div.oncontextmenu = (e) => { e.preventDefault(); if(confirm("Удалить?")) supabase.from('messages').delete().eq('id', m.id).then(loadMsgs); };
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         }
 
-        async function sendText() {
-            const i = document.getElementById('msgInput');
-            if (!i.value) return;
-            await supabaseClient.from('messages').insert([{ sender_name: myUser, content: i.value }]);
-            i.value = '';
+        // ОБРАБОТКА ВЫБОРА ФАЙЛА
+        function handleFile(el) {
+            selectedFile = el.files[0];
+            if (!selectedFile) return;
+            const reader = new FileReader();
+            const preview = document.getElementById('preview-box');
+            const view = document.getElementById('file-view');
+            preview.style.display = 'flex';
+            view.innerHTML = selectedFile.type.startsWith('video') ? `<video src="${URL.createObjectURL(selectedFile)}" muted></video>` : `<img src="${URL.createObjectURL(selectedFile)}">`;
         }
 
-        async function uploadFile(el) {
-            const file = el.files[0];
-            if(!file) return;
-            const path = Date.now() + "_" + file.name;
-            const { data, error } = await supabaseClient.storage.from('uploads').upload(path, file, { contentType: file.type });
-            if(error) { alert("Ошибка загрузки!"); return; }
-            const { data: res } = supabaseClient.storage.from('uploads').getPublicUrl(path);
-            await supabaseClient.from('messages').insert([{ sender_name: myUser, media_url: res.publicUrl, content: "" }]);
+        function clearFile() {
+            selectedFile = null;
+            document.getElementById('fileIn').value = '';
+            document.getElementById('preview-box').style.display = 'none';
+        }
+
+        async function sendAll() {
+            const input = document.getElementById('msgInput');
+            const txt = input.value;
+            let url = null;
+
+            if (selectedFile) {
+                const path = Date.now() + "_" + selectedFile.name;
+                const { data, error } = await supabase.storage.from('uploads').upload(path, selectedFile);
+                if (!error) {
+                    const { data: res } = supabase.storage.from('uploads').getPublicUrl(path);
+                    url = res.publicUrl;
+                }
+                clearFile();
+            }
+
+            if (txt || url) {
+                await supabase.from('messages').insert([{ sender_name: myUser, content: txt, media_url: url }]);
+                input.value = '';
+            }
         }
 
         async function doRegister() {
-            const name = prompt("Имя участника:");
+            const name = prompt("Имя:");
             const dec = await faceapi.detectSingleFace(document.getElementById('video')).withFaceLandmarks().withFaceDescriptor();
-            if (dec && name) {
-                await supabaseClient.from('allowed_faces').insert([{ name: name, face_descriptor: Array.from(dec.descriptor) }]);
-                alert("Лицо успешно добавлено в базу!");
-            }
+            if (dec && name) { await supabase.from('allowed_faces').insert([{ name, face_descriptor: Array.from(dec.descriptor) }]); alert("Ок!"); }
         }
     </script>
 </body>
