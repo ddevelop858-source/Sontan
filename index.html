@@ -15,8 +15,8 @@
         #status { position: fixed; top: 20px; left: 20px; z-index: 9999; font-size: 13px; color: var(--neon); background: rgba(0,0,0,0.7); padding: 7px 15px; border-radius: 20px; border: 1px solid var(--neon); box-shadow: 0 0 10px var(--neon); display: none; }
         .dot { display: inline-block; width: 8px; height: 8px; background: #0f0; border-radius: 50%; margin-right: 7px; box-shadow: 0 0 5px #0f0; }
 
-        /* РАДИО И МОЛНИЯ (ПОВЕРХ ВСЕГО) */
-        .radio-zone { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; align-items: center; }
+        /* РАДИО И МОЛНИЯ */
+        .radio-zone { position: fixed; top: 20px; right: 20px; z-index: 10001; display: flex; flex-direction: column; align-items: center; }
         .radio-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--neon); background: #000; color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; text-align: center; font-weight: bold; box-shadow: 0 0 15px rgba(0,242,255,0.4); }
         .bolt-svg { width: 40px; height: 50px; fill: var(--neon); opacity: 0.1; filter: drop-shadow(0 0 10px var(--neon)); margin-top: -5px; }
         .spinning { animation: rotate 4s linear infinite; background: var(--neon) !important; color: #000 !important; }
@@ -107,9 +107,15 @@
 
         async function runFaceID() {
             const URL_M = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(URL_M), faceapi.nets.faceLandmark68Net.loadFromUri(URL_M), faceapi.nets.faceRecognitionNet.loadFromUri(URL_M)]);
+            await Promise.all([
+                faceapi.nets.ssdMobilenetv1.loadFromUri(URL_M),
+                faceapi.nets.faceLandmark68Net.loadFromUri(URL_M),
+                faceapi.nets.faceRecognitionNet.loadFromUri(URL_M)
+            ]);
+            
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             document.getElementById('webcam').srcObject = stream;
+            
             const { data: db } = await sb.from('allowed_faces').select('*');
             const v = document.getElementById('webcam'), c = document.getElementById('face-cv');
             faceapi.matchDimensions(c, { width: 280, height: 280 });
@@ -117,11 +123,16 @@
             const loop = setInterval(async () => {
                 const dec = await faceapi.detectAllFaces(v).withFaceLandmarks().withFaceDescriptors();
                 if (dec.length > 0) {
-                    faceapi.draw.drawFaceLandmarks(c, faceapi.resizeResults(dec, { width: 280, height: 280 }));
+                    const resized = faceapi.resizeResults(dec, { width: 280, height: 280 });
+                    c.getContext('2d').clearRect(0,0,280,280);
+                    faceapi.draw.drawFaceLandmarks(c, resized);
+                    
                     dec.forEach(d => {
                         db?.forEach(u => {
                             if (faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
-                                myName = u.name; clearInterval(loop); startApp();
+                                myName = u.name;
+                                clearInterval(loop);
+                                startApp();
                             }
                         });
                     });
@@ -133,10 +144,14 @@
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('status').style.display = 'block';
             document.getElementById('chat-ui').style.display = 'flex';
+            
             const channel = sb.channel('online-presence', { config: { presence: { key: myName } } });
             channel.on('presence', { event: 'sync' }, () => {
                 document.getElementById('on-count').innerText = Object.keys(channel.presenceState()).length;
-            }).subscribe(async (s) => { if(s==='SUBSCRIBED') await channel.track({ online: true }); });
+            }).subscribe(async (s) => { 
+                if(s==='SUBSCRIBED') await channel.track({ online: true }); 
+            });
+
             loadMessages();
             sb.channel('db-changes').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMessages).subscribe();
         }
@@ -149,23 +164,39 @@
                 const div = document.createElement('div');
                 div.className = 'm-bubble';
                 let html = `<b>${m.sender_name}</b>`;
-                if(m.media_url) html += m.media_url.includes('mp4') ? `<video src="${m.media_url}" controls playsinline></video>` : `<img src="${m.media_url}">`;
+                if(m.media_url) {
+                    html += m.media_url.includes('mp4') ? 
+                        `<video src="${m.media_url}" controls playsinline></video>` : 
+                        `<img src="${m.media_url}">`;
+                }
                 if(m.content) html += `<div>${m.content}</div>`;
                 div.innerHTML = html;
-                div.onclick = async () => { if(confirm("Удалить сообщение?")) await sb.from('messages').delete().eq('id', m.id); };
+                
+                // УДАЛЕНИЕ СООБЩЕНИЯ
+                div.onclick = async () => { 
+                    if(confirm("Удалить это сообщение?")) {
+                        await sb.from('messages').delete().eq('id', m.id);
+                        loadMessages(); // Мгновенное обновление
+                    }
+                };
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
         }
 
         function makePreview(el) {
-            fileData = el.files[0]; if (!fileData) return;
+            fileData = el.files[0];
+            if (!fileData) return;
             document.getElementById('preview').style.display = 'flex';
-            document.getElementById('thumb').innerHTML = fileData.type.includes('video') ? `<video src="${URL.createObjectURL(fileData)}" muted></video>` : `<img src="${URL.createObjectURL(fileData)}">`;
+            document.getElementById('thumb').innerHTML = fileData.type.includes('video') ? 
+                `<video src="${URL.createObjectURL(fileData)}" muted></video>` : 
+                `<img src="${URL.createObjectURL(fileData)}">`;
         }
 
         function resetFile() {
-            fileData = null; document.getElementById('f-upload').value = ''; document.getElementById('preview').style.display = 'none';
+            fileData = null;
+            document.getElementById('f-upload').value = '';
+            document.getElementById('preview').style.display = 'none';
         }
 
         async function handleSend() {
