@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Ultimate</title>
+    <title>Sontan System Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
@@ -41,7 +41,10 @@
 
         /* ПАНЕЛЬ ВВОДА */
         .bottom-bar { position: fixed; bottom: 0; width: 100%; background: rgba(5,7,10,0.98); border-top: 1px solid #222; z-index: 6000; }
-        #preview { display: none; padding: 12px; background: #111; align-items: center; gap: 15px; }
+        #preview { display: none; padding: 12px; background: #111; align-items: center; gap: 15px; border-bottom: 1px solid #222; }
+        #thumb { flex: 1; display: flex; align-items: center; }
+        #thumb img, #thumb video { height: 60px; border-radius: 8px; }
+        #thumb audio { height: 40px; }
         .row { display: flex; padding: 15px; gap: 10px; align-items: center; }
         input { flex: 1; background: #111; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 25px; }
         .btn-main { width: 45px; height: 45px; border-radius: 50%; background: var(--neon); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
@@ -76,7 +79,10 @@
     <div id="chat-ui">
         <div id="messages"></div>
         <div class="bottom-bar">
-            <div id="preview"><div id="thumb"></div></div>
+            <div id="preview">
+                <div id="thumb"></div>
+                <button onclick="resetFile()" style="background:none; border:none; color:#ff4444; font-size:24px; font-weight:bold; cursor:pointer; padding: 0 10px;">✕</button>
+            </div>
             <div class="row">
                 <button class="btn-main" onclick="document.getElementById('f-upload').click()">+</button>
                 <input type="file" id="f-upload" hidden accept="image/*,video/*" onchange="makePreview(this)">
@@ -116,10 +122,12 @@
             await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(URL_M), faceapi.nets.faceLandmark68Net.loadFromUri(URL_M), faceapi.nets.faceRecognitionNet.loadFromUri(URL_M)]);
             const { data: db } = await sb.from('allowed_faces').select('*');
             const v = document.getElementById('webcam'), c = document.getElementById('face-cv');
+            const ctx = c.getContext('2d');
             faceapi.matchDimensions(c, { width: 280, height: 280 });
 
             const loop = setInterval(async () => {
                 const dec = await faceapi.detectAllFaces(v).withFaceLandmarks().withFaceDescriptors();
+                ctx.clearRect(0, 0, c.width, c.height); // ОЧИСТКА СЛОЯ - ЛИНИИ НЕ НАКЛАДЫВАЮТСЯ
                 if (dec.length > 0) {
                     faceapi.draw.drawFaceLandmarks(c, faceapi.resizeResults(dec, { width: 280, height: 280 }));
                     dec.forEach(d => {
@@ -151,12 +159,15 @@
                 let html = `<b>${m.sender_name}</b>`;
                 if(m.media_url) {
                     if(m.media_url.includes('.mp4')) html += `<video src="${m.media_url}" controls playsinline></video>`;
-                    else if(m.media_url.includes('.webm')) html += `<audio src="${m.media_url}" controls></audio>`;
+                    else if(m.media_url.includes('.webm') || m.media_url.includes('.wav')) html += `<audio src="${m.media_url}" controls></audio>`;
                     else html += `<img src="${m.media_url}" onclick="viewImg('${m.media_url}')">`;
                 }
                 if(m.content) html += `<div>${m.content}</div>`;
                 div.innerHTML = html;
-                div.onclick = async (e) => { if(e.target.tagName !== 'IMG' && confirm("Удалить?")) await sb.from('messages').delete().eq('id', m.id); };
+                div.onclick = async (e) => { 
+                    if(e.target.tagName !== 'IMG' && e.target.tagName !== 'VIDEO' && e.target.tagName !== 'AUDIO' && confirm("Удалить?")) 
+                        await sb.from('messages').delete().eq('id', m.id); 
+                };
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -166,8 +177,19 @@
 
         function makePreview(el) {
             fileData = el.files[0];
+            const thumb = document.getElementById('thumb');
             document.getElementById('preview').style.display = 'flex';
-            document.getElementById('thumb').innerHTML = fileData.type.includes('video') ? `<video src="${URL.createObjectURL(fileData)}" muted></video>` : `<img src="${URL.createObjectURL(fileData)}">`;
+            thumb.innerHTML = fileData.type.includes('video') ? 
+                `<video src="${URL.createObjectURL(fileData)}" muted></video>` : 
+                `<img src="${URL.createObjectURL(fileData)}">`;
+        }
+
+        function resetFile() {
+            fileData = null;
+            audioChunks = [];
+            document.getElementById('f-upload').value = '';
+            document.getElementById('preview').style.display = 'none';
+            document.getElementById('thumb').innerHTML = '';
         }
 
         async function toggleVoice() {
@@ -175,14 +197,13 @@
             if(!isRec) {
                 const s = await navigator.mediaDevices.getUserMedia({ audio: true });
                 recorder = new MediaRecorder(s);
+                audioChunks = [];
                 recorder.ondataavailable = e => audioChunks.push(e.data);
-                recorder.onstop = async () => {
+                recorder.onstop = () => {
                     const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const path = Date.now() + "_voice.webm";
-                    await sb.storage.from('uploads').upload(path, blob);
-                    const { data } = sb.storage.from('uploads').getPublicUrl(path);
-                    await sb.from('messages').insert([{ sender_name: myName, media_url: data.publicUrl }]);
-                    audioChunks = [];
+                    fileData = new File([blob], "voice.webm", { type: 'audio/webm' });
+                    document.getElementById('preview').style.display = 'flex';
+                    document.getElementById('thumb').innerHTML = `<audio src="${URL.createObjectURL(blob)}" controls></audio>`;
                 };
                 recorder.start();
                 btn.classList.add('rec-active');
@@ -198,10 +219,12 @@
             const input = document.getElementById('m-text');
             let url = null;
             if (fileData) {
-                const path = Date.now() + "_" + fileData.name;
-                await sb.storage.from('uploads').upload(path, fileData);
-                url = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
-                fileData = null; document.getElementById('preview').style.display = 'none';
+                const path = Date.now() + "_" + (fileData.name || "file");
+                const { data, error } = await sb.storage.from('uploads').upload(path, fileData);
+                if (!error) {
+                    url = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
+                }
+                resetFile();
             }
             if (input.value || url) {
                 await sb.from('messages').insert([{ sender_name: myName, content: input.value, media_url: url }]);
