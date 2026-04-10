@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Final Stable</title>
+    <title>Sontan System Final Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
@@ -92,11 +92,11 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const sb = window.supabase.createClient(SB_URL, SB_KEY);
         
-        let myName = localStorage.getItem('sontan_user') || "Serega";
+        // Гарантированное получение имени из памяти
+        let myName = localStorage.getItem('active_user') || "Гость";
         let rad = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
         let fileData = null, recorder = null, audioChunks = [], isRec = false;
 
-        // СЕКРЕТКА
         const l = document.getElementById('logo');
         let clicks = 0;
         l.onclick = () => { clicks++; if(clicks >= 5) { if(prompt("Пароль:") === "Seregasib") document.getElementById('admin-reg').style.display='block'; clicks=0; } };
@@ -125,7 +125,7 @@
                         db?.forEach(u => {
                             if (faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
                                 myName = u.name;
-                                localStorage.setItem('sontan_user', myName);
+                                localStorage.setItem('active_user', myName); // Сохраняем имя!
                                 clearInterval(loop); startApp();
                             }
                         });
@@ -146,7 +146,7 @@
                 document.getElementById('on-count').innerText = Object.keys(state).length;
             }).subscribe(async (s) => { if(s === 'SUBSCRIBED') await ch.track({ user: myName }); });
 
-            sb.channel('db-changes').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMessages).subscribe();
+            sb.channel('realtime-msgs').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMessages).subscribe();
         }
 
         async function loadMessages() {
@@ -202,6 +202,7 @@
             } else { recorder.stop(); btn.classList.remove('rec-active'); isRec = false; }
         }
 
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ
         async function handleSend() {
             const input = document.getElementById('m-text');
             const btn = document.getElementById('send-btn');
@@ -209,26 +210,33 @@
             if (!val && !fileData) return;
 
             btn.disabled = true;
+            btn.style.opacity = '0.5';
+
             try {
                 let url = null;
                 if (fileData) {
-                    const path = `${Date.now()}_${fileData.name || 'voice.webm'}`;
+                    const path = `file_${Date.now()}`;
                     const { error: upErr } = await sb.storage.from('uploads').upload(path, fileData);
                     if (upErr) throw upErr;
                     url = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
                 }
 
+                // Жёстко подставляем имя, чтобы не было NULL
+                const currentSender = myName === "Гость" ? "Serega" : myName;
+
                 const { error: insErr } = await sb.from('messages').insert([
-                    { sender_name: myName, content: val, media_url: url }
+                    { sender_name: currentSender, content: val, media_url: url }
                 ]);
                 if (insErr) throw insErr;
 
                 input.value = '';
                 resetFile();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
+                loadMessages();
+            } catch (err) {
+                alert("Критическая ошибка отправки: " + err.message);
             } finally {
                 btn.disabled = false;
+                btn.style.opacity = '1';
             }
         }
 
