@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan Final Fixed</title>
+    <title>Sontan Final PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
@@ -11,52 +11,58 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { background: var(--bg); color: white; font-family: -apple-system, sans-serif; margin: 0; height: 100dvh; overflow: hidden; }
 
-        /* Авторизация */
+        /* Вход */
         #auth { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .v-ring { width: 240px; height: 240px; border-radius: 50%; border: 3px solid var(--blue); overflow: hidden; position: relative; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        #reg-btn { display: none; margin-top: 20px; color: #777; border: 1px solid #444; padding: 10px 20px; border-radius: 12px; background: none; font-size: 13px; }
+        #reg-btn { display: none; margin-top: 20px; color: #555; border: 1px solid #333; padding: 10px 20px; border-radius: 12px; background: none; font-size: 13px; }
 
         /* Чат */
         #chat-ui { display: none; flex-direction: column; height: 100dvh; }
         header { background: var(--bar); height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid #141a21; z-index: 100; }
-        .logo { font-size: 20px; font-weight: bold; cursor: pointer; user-select: none; -webkit-user-select: none; }
+        
+        /* Исправленный логотип для удержания */
+        .logo { 
+            font-size: 20px; font-weight: bold; cursor: pointer; 
+            user-select: none; -webkit-user-select: none; /* Запрет выделения */
+            -webkit-touch-callout: none; /* Запрет системного меню на iOS */
+        }
 
         #msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 140px; }
-        .msg { max-width: 85%; padding: 10px; border-radius: 16px 16px 16px 4px; background: var(--bubble); align-self: flex-start; animation: slideUp 0.2s; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } }
+        .msg { max-width: 85%; padding: 10px; border-radius: 16px 16px 16px 4px; background: var(--bubble); align-self: flex-start; position: relative; }
         .msg b { color: var(--blue); font-size: 11px; display: block; margin-bottom: 4px; }
-        .msg img, .msg video { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
+        .msg img, .msg video { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; background: #000; }
 
         /* Голосовое */
-        .v-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 12px; }
-        .v-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--blue); border: none; color: white; cursor: pointer; }
+        .v-row { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 12px; margin-top: 5px; }
+        .v-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--blue); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* Панель управления */
-        .controls { position: fixed; bottom: 0; width: 100%; background: var(--bar); z-index: 1000; border-top: 1px solid #141a21; padding-bottom: 25px; }
-        #pre-view { display: none; padding: 12px; background: #2a343e; align-items: center; gap: 12px; border-bottom: 1px solid #141a21; }
-        #pre-view img { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; border: 1px solid var(--blue); }
+        /* Панель */
+        .controls { position: fixed; bottom: 0; width: 100%; background: var(--bar); z-index: 1000; border-top: 1px solid #141a21; padding-bottom: 30px; }
+        #pre-view { display: none; padding: 10px 15px; background: #2a343e; align-items: center; gap: 12px; border-bottom: 1px solid #141a21; }
+        #pre-view img { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; }
         
-        .input-bar { display: flex; align-items: center; padding: 10px 15px; gap: 12px; }
+        .input-bar { display: flex; align-items: center; padding: 10px 15px; gap: 10px; }
         .input-bar input[type="text"] { flex: 1; background: #1c242c; border: none; color: white; padding: 12px 18px; border-radius: 25px; font-size: 16px; }
-        .icon-btn { background: none; border: none; color: #8a949b; font-size: 26px; cursor: pointer; display: flex; align-items: center; }
-        .recording { color: #ff3b30 !important; }
+        .btn-icon { background: none; border: none; color: #8a949b; font-size: 26px; cursor: pointer; }
+        .rec-now { color: #ff3b30 !important; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
 
-        #rad-btn { width: 40px; height: 40px; border: 2px solid var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; text-align: center; color: var(--blue); cursor: pointer; }
+        #rad-btn { width: 40px; height: 40px; border: 2px solid var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; text-align: center; color: var(--blue); }
     </style>
 </head>
 <body>
 
     <div id="auth">
-        <h1 style="letter-spacing: 6px; margin-bottom: 20px;">SONTAN</h1>
+        <h1 style="letter-spacing: 5px; margin-bottom: 25px;">SONTAN</h1>
         <div class="v-ring"><video id="v" autoplay muted playsinline></video></div>
-        <button id="go" onclick="startFaceID()" style="margin-top:40px; padding:18px 70px; border-radius:35px; background:var(--blue); border:none; color:white; font-weight:bold; font-size:16px;">ВОЙТИ</button>
-        <button id="reg-btn" onclick="openReg()">REGISTRATION</button>
+        <button id="go" onclick="startFace()" style="margin-top:40px; padding:18px 70px; border-radius:35px; background:var(--blue); border:none; color:white; font-weight:bold; font-size:16px;">ВОЙТИ</button>
+        <button id="reg-btn" onclick="doRegistration()">REGISTRATION</button>
     </div>
 
     <div id="chat-ui">
         <header>
-            <div class="logo" id="main-logo">Sontan</div>
+            <div class="logo" id="logo-sec">Sontan</div>
             <div id="rad-btn" onclick="handleRadio()">EUROPA<br>PLUS</div>
         </header>
         
@@ -65,14 +71,14 @@
         <div class="controls">
             <div id="pre-view">
                 <div id="pre-info" style="font-size: 13px; color: var(--blue); flex: 1;">Файл готов...</div>
-                <button onclick="clearMedia()" style="background:none; border:none; color:#ff3b30; font-weight:bold;">ОТМЕНА</button>
+                <button onclick="cancelMedia()" style="background:none; border:none; color:#ff3b30; font-weight:bold;">ОТМЕНА</button>
             </div>
             <div class="input-bar">
-                <button class="icon-btn" onclick="document.getElementById('file-input').click()">📎</button>
-                <input type="file" id="file-input" hidden onchange="onFileSelect(this)">
+                <button class="btn-icon" onclick="document.getElementById('file-in').click()">📎</button>
+                <input type="file" id="file-in" hidden onchange="onFileSelect(this)">
                 <input type="text" id="msg-text" placeholder="Сообщение">
-                <button class="icon-btn" id="mic-btn" onclick="onMicClick()">🎤</button>
-                <button class="icon-btn" style="color:var(--blue);" onclick="sendFinal()">➤</button>
+                <button class="btn-icon" id="mic-btn" onclick="handleMic()">🎤</button>
+                <button class="btn-icon" style="color:var(--blue);" onclick="sendNow()">➤</button>
             </div>
         </div>
     </div>
@@ -82,78 +88,90 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const sb = window.supabase.createClient(SB_URL, SB_KEY);
 
-        let myUser = localStorage.getItem('s_name') || "Serega";
+        let myName = localStorage.getItem('s_name') || "Serega";
         let radio = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
-        let currentAudio = null, recorder, audioChunks = [], isRecording = false, longPress, mediaToSend = null;
+        let currentAudio = null, recorder, chunks = [], isRecording = false, pressTimer, mediaFile = null;
 
-        // Секретка: Удержание 2 секунды
-        const logoEl = document.getElementById('main-logo');
-        const triggerSecret = () => {
-            longPress = setTimeout(() => {
-                if(prompt("Пароль доступа:") === "Seregasib") document.getElementById('reg-btn').style.display='block';
+        // ИСПРАВЛЕННАЯ СЕКРЕТКА (Удержание 2 сек)
+        const logo = document.getElementById('logo-sec');
+        
+        const startPress = (e) => {
+            e.preventDefault(); // Запрещаем выделение и системное меню
+            pressTimer = setTimeout(() => {
+                if(prompt("Секретное слово:") === "Seregasib") {
+                    document.getElementById('reg-btn').style.display = 'block';
+                }
             }, 2000);
         };
-        logoEl.ontouchstart = logoEl.onmousedown = triggerSecret;
-        logoEl.ontouchend = logoEl.onmouseup = () => clearTimeout(longPress);
+
+        const endPress = () => clearTimeout(pressTimer);
+
+        logo.addEventListener('touchstart', startPress, {passive: false});
+        logo.addEventListener('touchend', endPress);
+        logo.addEventListener('mousedown', startPress);
+        logo.addEventListener('mouseup', endPress);
 
         function onFileSelect(el) {
             if(el.files[0]) {
-                mediaToSend = el.files[0];
+                mediaFile = el.files[0];
                 const pv = document.getElementById('pre-view');
-                const pi = document.getElementById('pre-info');
                 pv.style.display = 'flex';
-                pi.innerHTML = mediaToSend.type.includes('image') ? `<img src="${URL.createObjectURL(mediaToSend)}"> Фото выбрано` : `📎 Файл готов`;
+                document.getElementById('pre-info').innerHTML = mediaFile.type.includes('image') ? `<img src="${URL.createObjectURL(mediaFile)}"> Фото выбрано` : `📎 Файл готов`;
             }
         }
 
-        function clearMedia() {
-            mediaToSend = null;
+        function cancelMedia() {
+            mediaFile = null;
             document.getElementById('pre-view').style.display = 'none';
-            document.getElementById('file-input').value = '';
+            document.getElementById('file-in').value = '';
         }
 
-        async function startFaceID() {
+        async function startFace() {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             document.getElementById('v').srcObject = stream;
             const M = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
             await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(M), faceapi.nets.faceLandmark68Net.loadFromUri(M), faceapi.nets.faceRecognitionNet.loadFromUri(M)]);
             const { data: users } = await sb.from('allowed_faces').select('*');
-            const interval = setInterval(async () => {
+            const loop = setInterval(async () => {
                 const dec = await faceapi.detectSingleFace('v').withFaceLandmarks().withFaceDescriptor();
                 if(dec) {
                     for (let u of users) {
                         if(faceapi.euclideanDistance(dec.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
-                            myUser = u.name; localStorage.setItem('s_name', myUser);
-                            clearInterval(interval); stream.getTracks().forEach(t => t.stop());
+                            myName = u.name; localStorage.setItem('s_name', myName);
+                            clearInterval(loop); stream.getTracks().forEach(t => t.stop());
                             document.getElementById('auth').style.display = 'none';
                             document.getElementById('chat-ui').style.display = 'flex';
-                            initApp();
+                            initChat();
                         }
                     }
                 }
             }, 700);
         }
 
-        function initApp() {
-            loadChat();
-            sb.channel('updates').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadChat).subscribe();
+        function initChat() {
+            loadMessages();
+            sb.channel('db').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMessages).subscribe();
         }
 
-        async function loadChat() {
+        async function loadMessages() {
             const { data } = await sb.from('messages').select('*').order('created_at', { ascending: true });
             const box = document.getElementById('msgs'); box.innerHTML = '';
             data?.forEach(m => {
                 const d = document.createElement('div'); d.className = 'msg';
-                let content = `<b>${m.sender_name}</b>`;
+                let h = `<b>${m.sender_name}</b>`;
                 if(m.media_url) {
-                    const url = m.media_url;
-                    if(url.includes('.webm')) content += `<div class="v-row"><button class="v-btn" onclick="playVoice('${url}')">▶</button> Голосовое</div>`;
-                    else if(url.includes('.mp4')) content += `<video src="${url}" controls width="100%"></video>`;
-                    else content += `<img src="${url}" onclick="window.open('${url}')">`;
+                    const u = m.media_url;
+                    if(u.includes('.webm')) h += `<div class="v-row"><button class="v-btn" onclick="playVoice('${u}')">▶</button> Голосовое</div>`;
+                    else if(u.includes('.mp4')) h += `<video src="${u}" controls width="100%"></video>`;
+                    else h += `<img src="${u}" onclick="window.open('${u}')">`;
                 }
-                if(m.content) content += `<div>${m.content}</div>`;
-                d.innerHTML = content;
-                d.onclick = (e) => { if(e.target.tagName !== 'BUTTON' && confirm("Удалить сообщение?")) sb.from('messages').delete().eq('id', m.id); };
+                if(m.content) h += `<div>${m.content}</div>`;
+                d.innerHTML = h;
+                d.onclick = (e) => { 
+                    if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'VIDEO') {
+                        if(confirm("Удалить?")) sb.from('messages').delete().eq('id', m.id);
+                    }
+                };
                 box.appendChild(d);
             });
             box.scrollTop = box.scrollHeight;
@@ -171,43 +189,45 @@
             else { if(currentAudio) currentAudio.pause(); radio.play(); }
         }
 
-        async function onMicClick() {
-            const btn = document.getElementById('mic-btn');
+        async function handleMic() {
+            const b = document.getElementById('mic-btn');
             if(!isRecording) {
                 const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-                recorder = new MediaRecorder(s); audioChunks = [];
-                recorder.ondataavailable = e => audioChunks.push(e.data);
+                recorder = new MediaRecorder(s); chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
                 recorder.onstop = () => {
-                    mediaToSend = new File([new Blob(audioChunks, { type: 'audio/webm' })], "voice.webm");
+                    mediaFile = new File([new Blob(chunks, { type: 'audio/webm' })], "v.webm");
                     document.getElementById('pre-view').style.display = 'flex';
                     document.getElementById('pre-info').innerText = "🎤 Голос записан";
                 };
-                recorder.start(); isRecording = true; btn.classList.add('recording');
-            } else { recorder.stop(); isRecording = false; btn.classList.remove('recording'); }
+                recorder.start(); isRecording = true; b.classList.add('rec-now');
+            } else { recorder.stop(); isRecording = false; b.classList.remove('rec-now'); }
         }
 
-        async function sendFinal() {
-            const txtEl = document.getElementById('msg-text');
-            const txt = txtEl.value.trim();
-            if(!txt && !mediaToSend) return;
+        async function sendNow() {
+            const t = document.getElementById('msg-text');
+            const val = t.value.trim();
+            if(!val && !mediaFile) return;
             
-            const file = mediaToSend; clearMedia(); txtEl.value = '';
+            const file = mediaFile; cancelMedia(); t.value = '';
             let url = null;
             if(file) {
-                const fileName = `${Date.now()}_${file.name}`;
-                const { data, error } = await sb.storage.from('uploads').upload(fileName, file);
-                if(data) url = sb.storage.from('uploads').getPublicUrl(fileName).data.publicUrl;
+                const path = `${Date.now()}_${file.name}`;
+                const { data } = await sb.storage.from('uploads').upload(path, file);
+                if(data) url = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
             }
-            await sb.from('messages').insert([{ sender_name: myUser, content: txt, media_url: url }]);
-            loadChat();
+            // Гарантируем отправку имени
+            const sender = myName || localStorage.getItem('s_name') || "Serega";
+            await sb.from('messages').insert([{ sender_name: sender, content: val, media_url: url }]);
+            loadMessages();
         }
 
-        async function openReg() {
-            const name = prompt("Имя нового пользователя:");
-            const dec = await faceapi.detectSingleFace('v').withFaceLandmarks().withFaceDescriptor();
-            if(dec && name) {
-                await sb.from('allowed_faces').insert([{ name: name, face_descriptor: Array.from(dec.descriptor) }]);
-                alert("Успешно добавлено!");
+        async function doRegistration() {
+            const n = prompt("Имя для FaceID:");
+            const d = await faceapi.detectSingleFace('v').withFaceLandmarks().withFaceDescriptor();
+            if(d && n) {
+                await sb.from('allowed_faces').insert([{ name: n, face_descriptor: Array.from(d.descriptor) }]);
+                alert("Готово!");
             }
         }
     </script>
