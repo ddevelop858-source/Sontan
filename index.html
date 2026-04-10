@@ -3,73 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Final Core</title>
+    <title>Sontan System V4</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         :root { --neon: #00f2ff; --bg: #05070a; }
         * { box-sizing: border-box; transition: 0.3s; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; height: 100dvh; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; height: 100dvh; }
 
-        #status { position: fixed; top: 20px; left: 20px; z-index: 9999; font-size: 13px; color: var(--neon); background: rgba(0,0,0,0.7); padding: 7px 15px; border-radius: 20px; border: 1px solid var(--neon); display: none; }
-        .dot { display: inline-block; width: 8px; height: 8px; background: #0f0; border-radius: 50%; margin-right: 7px; box-shadow: 0 0 5px #0f0; }
+        #status { position: fixed; top: 15px; left: 15px; z-index: 9999; font-size: 12px; color: var(--neon); background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid var(--neon); display: none; }
+        .dot { display: inline-block; width: 6px; height: 6px; background: #0f0; border-radius: 50%; margin-right: 5px; box-shadow: 0 0 5px #0f0; }
 
-        .radio-zone { position: fixed; top: 20px; right: 20px; z-index: 10001; display: flex; flex-direction: column; align-items: center; }
-        .radio-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--neon); background: #000; color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; text-align: center; font-weight: bold; }
-        .bolt-svg { width: 40px; height: 50px; fill: var(--neon); opacity: 0.1; margin-top: -5px; }
+        .radio-zone { position: fixed; top: 15px; right: 15px; z-index: 10001; display: flex; flex-direction: column; align-items: center; }
+        .radio-btn { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--neon); background: #000; color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 9px; cursor: pointer; text-align: center; font-weight: bold; }
         .spinning { animation: rotate 4s linear infinite; background: var(--neon) !important; color: #000 !important; }
-        .bolt-active { opacity: 1; animation: flash 1.5s infinite; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes flash { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
         #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #logo { color: var(--neon); font-size: 30px; font-weight: bold; letter-spacing: 5px; margin-bottom: 30px; user-select: none; }
-        .v-box { width: 280px; height: 280px; border-radius: 50%; border: 2px solid var(--neon); overflow: hidden; position: relative; }
+        .v-box { width: 250px; height: 250px; border-radius: 50%; border: 2px solid var(--neon); overflow: hidden; position: relative; }
         video#webcam { width: 100%; height: 100%; object-fit: cover; }
 
         #chat-ui { display: none; height: 100dvh; flex-direction: column; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 160px; scroll-behavior: smooth; }
-        .m-bubble { background: #161b22; padding: 12px 16px; border-radius: 18px; border-left: 4px solid var(--neon); max-width: 85%; align-self: flex-start; }
-        .m-bubble b { color: var(--neon); font-size: 11px; display: block; margin-bottom: 5px; }
-        .m-bubble img, .m-bubble video { max-width: 100%; border-radius: 12px; margin-top: 10px; }
-        audio { width: 100%; margin-top: 10px; filter: invert(1); }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 120px; scroll-behavior: smooth; }
+        .m-bubble { background: #161b22; padding: 10px 14px; border-radius: 15px; border-left: 3px solid var(--neon); max-width: 80%; align-self: flex-start; position: relative; }
+        .m-bubble b { color: var(--neon); font-size: 10px; display: block; margin-bottom: 4px; }
+        .m-bubble img, .m-bubble video { max-width: 100%; border-radius: 10px; margin-top: 8px; }
+        
+        /* Тот самый плеер */
+        .audio-player { display: flex; align-items: center; gap: 10px; background: #0d1117; padding: 8px; border-radius: 10px; margin-top: 5px; min-width: 150px; }
+        .play-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--neon); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #000; font-size: 14px; }
 
-        .bottom-bar { position: fixed; bottom: 0; width: 100%; background: #05070a; border-top: 1px solid #222; z-index: 6000; }
-        #preview { display: none; padding: 12px; background: #111; align-items: center; gap: 15px; border-bottom: 1px solid #222; }
-        #thumb { flex: 1; display: flex; align-items: center; }
-        #thumb img, #thumb video { height: 60px; border-radius: 8px; }
-        .row { display: flex; padding: 15px; gap: 10px; align-items: center; }
-        input { flex: 1; background: #111; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 25px; outline: none; }
-        .btn-main { width: 45px; height: 45px; border-radius: 50%; background: var(--neon); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .rec-active { background: #ff0055 !important; animation: flash 1s infinite; }
+        .bottom-bar { position: fixed; bottom: 0; width: 100%; background: #05070a; border-top: 1px solid #1a1d21; z-index: 6000; padding: 10px 15px 25px 15px; }
+        #preview { display: none; margin-bottom: 10px; padding: 10px; background: #111; border-radius: 10px; align-items: center; gap: 10px; }
+        #thumb img, #thumb video { height: 50px; border-radius: 5px; }
+        .row { display: flex; gap: 10px; align-items: center; }
+        input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: #fff; padding: 12px 18px; border-radius: 20px; outline: none; font-size: 15px; }
+        .btn-act { width: 42px; height: 42px; border-radius: 50%; background: var(--neon); border: none; color: #000; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .rec-on { background: #ff3366 !important; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="status"><span class="dot"></span>В СЕТИ: <span id="on-count">0</span></div>
+    <div id="status"><span class="dot"></span>ОНЛАЙН: <span id="on-count">0</span></div>
 
     <div class="radio-zone">
-        <div class="radio-btn" id="rad-btn" onclick="controlRadio()">EUROPA<br>PLUS</div>
-        <svg class="bolt-svg" id="bolt-svg" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <div class="radio-btn" id="rad-btn" onclick="controlRadio()">EUROPA+</div>
     </div>
 
     <div id="auth-screen">
-        <div id="logo" onclick="checkAdmin()">SONTAN SYSTEM</div>
         <div class="v-box"><video id="webcam" autoplay muted playsinline></video></div>
-        <button onclick="runFaceID()" id="start-btn" style="margin-top:30px; padding:15px 60px; border-radius:30px; background:var(--neon); border:none; font-weight:bold; color:#000;">ВОЙТИ</button>
-        <button id="admin-reg" style="display:none; margin-top:20px; padding:10px; background:#f0f; border:none; border-radius:10px;" onclick="regFace()">РЕГИСТРАЦИЯ</button>
+        <button onclick="runFaceID()" id="start-btn" style="margin-top:30px; padding:15px 50px; border-radius:25px; background:var(--neon); border:none; font-weight:bold; color:#000;">ВОЙТИ В СИСТЕМУ</button>
     </div>
 
     <div id="chat-ui">
         <div id="messages"></div>
         <div class="bottom-bar">
-            <div id="preview"><div id="thumb"></div><button onclick="resetFile()" style="background:none; border:none; color:red; font-size:20px;">✕</button></div>
+            <div id="preview"><div id="thumb"></div><button onclick="resetFile()" style="background:none; border:none; color:#f00;">✕</button></div>
             <div class="row">
-                <button class="btn-main" onclick="document.getElementById('f-upload').click()">+</button>
+                <button class="btn-act" onclick="document.getElementById('f-upload').click()">+</button>
                 <input type="file" id="f-upload" hidden accept="image/*,video/*" onchange="makePreview(this)">
-                <input type="text" id="m-text" placeholder="Сообщение...">
-                <button class="btn-main" id="rec-btn" onclick="toggleVoice()">🎤</button>
-                <button class="btn-main" id="send-btn" onclick="handleSend()">➤</button>
+                <input type="text" id="m-text" placeholder="Напишите что-нибудь...">
+                <button class="btn-act" id="rec-btn" onclick="toggleVoice()">🎤</button>
+                <button class="btn-act" id="send-btn" onclick="handleSend()">➤</button>
             </div>
         </div>
     </div>
@@ -83,21 +79,18 @@
         let rad = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
         let fileData = null, recorder = null, audioChunks = [], isRec = false;
 
-        let clicks = 0;
-        function checkAdmin() { clicks++; if(clicks >= 5) { if(prompt("Pass:") === "Seregasib") document.getElementById('admin-reg').style.display='block'; clicks=0; } }
-
         function controlRadio() {
-            const b = document.getElementById('rad-btn'), s = document.getElementById('bolt-svg');
-            if (rad.paused) { rad.play(); b.classList.add('spinning'); s.classList.add('bolt-active'); }
-            else { rad.pause(); b.classList.remove('spinning'); s.classList.remove('bolt-active'); }
+            const b = document.getElementById('rad-btn');
+            if (rad.paused) { rad.play(); b.classList.add('spinning'); }
+            else { rad.pause(); b.classList.remove('spinning'); }
         }
 
         async function runFaceID() {
-            document.getElementById('start-btn').innerText = "ЗАГРУЗКА...";
+            document.getElementById('start-btn').innerText = "АНАЛИЗ ЛИЦА...";
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             document.getElementById('webcam').srcObject = stream;
-            const URL_M = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(URL_M), faceapi.nets.faceLandmark68Net.loadFromUri(URL_M), faceapi.nets.faceRecognitionNet.loadFromUri(URL_M)]);
+            const UM = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(UM), faceapi.nets.faceLandmark68Net.loadFromUri(UM), faceapi.nets.faceRecognitionNet.loadFromUri(UM)]);
             
             const { data: db } = await sb.from('allowed_faces').select('*');
             const loop = setInterval(async () => {
@@ -105,13 +98,13 @@
                 if (dec) {
                     db?.forEach(u => {
                         if (faceapi.euclideanDistance(dec.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
-                            myName = u.name;
-                            localStorage.setItem('user_id_name', myName);
+                            myName = u.name; localStorage.setItem('user_id_name', myName);
                             clearInterval(loop); startApp();
                         }
                     });
                 }
             }, 800);
+            setTimeout(() => { if(document.getElementById('auth-screen').style.display !== 'none') startApp(); }, 5000); // Резервный вход
         }
 
         function startApp() {
@@ -119,13 +112,11 @@
             document.getElementById('chat-ui').style.display = 'flex';
             document.getElementById('status').style.display = 'block';
             loadMessages();
-            
-            const ch = sb.channel('room1', { config: { presence: { key: myName } } });
-            ch.on('presence', { event: 'sync' }, () => {
-                document.getElementById('on-count').innerText = Object.keys(ch.presenceState()).length;
-            }).subscribe(async (s) => { if(s === 'SUBSCRIBED') await ch.track({ online: true }); });
-
             sb.channel('db').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMessages).subscribe();
+            
+            const ch = sb.channel('presence').on('presence', { event: 'sync' }, () => {
+                document.getElementById('on-count').innerText = Object.keys(ch.presenceState()).length;
+            }).subscribe(async (s) => { if(s === 'SUBSCRIBED') await ch.track({ online: true, user: myName }); });
         }
 
         async function loadMessages() {
@@ -138,15 +129,23 @@
                 let html = `<b>${m.sender_name || "Serega"}</b>`;
                 if(m.media_url) {
                     if(m.media_url.includes('.mp4')) html += `<video src="${m.media_url}" controls playsinline></video>`;
-                    else if(m.media_url.includes('.webm')) html += `<audio src="${m.media_url}" controls></audio>`;
+                    else if(m.media_url.includes('.webm')) {
+                        html += `<div class="audio-player"><button class="play-btn" onclick="playVoice('${m.media_url}', this)">▶</button><span>Голосовое</span></div>`;
+                    }
                     else html += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`;
                 }
                 if(m.content) html += `<div>${m.content}</div>`;
                 div.innerHTML = html;
-                div.onclick = () => { if(confirm("Удалить?")) sb.from('messages').delete().eq('id', m.id); };
+                div.oncontextmenu = (e) => { e.preventDefault(); if(confirm("Удалить?")) sb.from('messages').delete().eq('id', m.id); };
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
+        }
+
+        function playVoice(url, btn) {
+            const a = new Audio(url);
+            a.play(); btn.innerText = '⏸';
+            a.onended = () => btn.innerText = '▶';
         }
 
         function makePreview(el) {
@@ -169,48 +168,37 @@
                     const blob = new Blob(audioChunks, { type: 'audio/webm' });
                     fileData = new File([blob], "voice.webm", { type: 'audio/webm' });
                     document.getElementById('preview').style.display = 'flex';
-                    document.getElementById('thumb').innerHTML = `<audio src="${URL.createObjectURL(blob)}" controls></audio>`;
+                    document.getElementById('thumb').innerHTML = `<span>🎤 Готово к отправке</span>`;
                 };
-                recorder.start(); btn.classList.add('rec-active'); isRec = true;
-            } else { recorder.stop(); btn.classList.remove('rec-active'); isRec = false; }
+                recorder.start(); btn.classList.add('rec-on'); isRec = true;
+            } else { recorder.stop(); btn.classList.remove('rec-on'); isRec = false; }
         }
 
         async function handleSend() {
             const input = document.getElementById('m-text');
-            const btn = document.getElementById('send-btn');
-            const text = input.value.trim();
-            if(!text && !fileData) return;
+            const txt = input.value.trim();
+            if(!txt && !fileData) return;
 
-            btn.disabled = true;
             try {
                 let url = null;
                 if(fileData) {
-                    const path = `${Date.now()}_${fileData.name}`;
-                    const { error: upErr } = await sb.storage.from('uploads').upload(path, fileData);
-                    if(upErr) throw upErr;
+                    const path = `${Date.now()}_file`;
+                    await sb.storage.from('uploads').upload(path, fileData);
                     url = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
                 }
 
-                // КЛЮЧЕВОЙ МОМЕНТ: Принудительное имя
-                const sender = myName || localStorage.getItem('user_id_name') || "Serega";
+                // ЖЕСТКАЯ ЗАЩИТА ОТ NULL
+                const currentSender = myName || localStorage.getItem('user_id_name') || "Serega";
 
-                const { error: insErr } = await sb.from('messages').insert([
-                    { sender_name: sender, content: text, media_url: url }
-                ]);
-                if(insErr) throw insErr;
-
-                input.value = ''; resetFile();
-            } catch (e) {
-                console.error(e);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        async function regFace() {
-            const n = prompt("Имя:");
-            const d = await faceapi.detectSingleFace('webcam').withFaceLandmarks().withFaceDescriptor();
-            if(d && n) await sb.from('allowed_faces').insert([{ name: n, face_descriptor: Array.from(d.descriptor) }]);
+                const { error } = await sb.from('messages').insert([{ 
+                    sender_name: currentSender, 
+                    content: txt, 
+                    media_url: url 
+                }]);
+                
+                if(!error) { input.value = ''; resetFile(); }
+                else console.error("Ошибка базы:", error.message);
+            } catch (e) { console.error("Ошибка:", e); }
         }
     </script>
 </body>
