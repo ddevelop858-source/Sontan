@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Final</title>
+    <title>Sontan System Final Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
@@ -11,11 +11,9 @@
         * { box-sizing: border-box; transition: 0.3s; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; height: 100dvh; }
 
-        /* ИНДИКАТОР В СЕТИ */
         #status { position: fixed; top: 20px; left: 20px; z-index: 9999; font-size: 13px; color: var(--neon); background: rgba(0,0,0,0.7); padding: 7px 15px; border-radius: 20px; border: 1px solid var(--neon); display: none; }
         .dot { display: inline-block; width: 8px; height: 8px; background: #0f0; border-radius: 50%; margin-right: 7px; box-shadow: 0 0 5px #0f0; }
 
-        /* РАДИО */
         .radio-zone { position: fixed; top: 20px; right: 20px; z-index: 10001; display: flex; flex-direction: column; align-items: center; }
         .radio-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--neon); background: #000; color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; text-align: center; font-weight: bold; }
         .bolt-svg { width: 40px; height: 50px; fill: var(--neon); opacity: 0.1; margin-top: -5px; }
@@ -24,22 +22,19 @@
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes flash { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-        /* ЭКРАН ВХОДА */
         #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #logo { color: var(--neon); font-size: 30px; font-weight: bold; letter-spacing: 5px; margin-bottom: 30px; user-select: none; }
         .v-box { width: 280px; height: 280px; border-radius: 50%; border: 2px solid var(--neon); overflow: hidden; position: relative; }
         video#webcam { width: 100%; height: 100%; object-fit: cover; }
         canvas#face-cv { position: absolute; inset: 0; }
 
-        /* ЧАТ */
         #chat-ui { display: none; height: 100dvh; flex-direction: column; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 160px; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 160px; scroll-behavior: smooth; }
         .m-bubble { background: #161b22; padding: 12px 16px; border-radius: 18px; border-left: 4px solid var(--neon); max-width: 85%; align-self: flex-start; position: relative; }
         .m-bubble b { color: var(--neon); font-size: 11px; display: block; margin-bottom: 5px; }
         .m-bubble img, .m-bubble video { max-width: 100%; border-radius: 12px; margin-top: 10px; cursor: pointer; }
         audio { width: 100%; margin-top: 10px; filter: invert(1); }
 
-        /* ПАНЕЛЬ ВВОДА */
         .bottom-bar { position: fixed; bottom: 0; width: 100%; background: rgba(5,7,10,0.98); border-top: 1px solid #222; z-index: 6000; }
         #preview { display: none; padding: 12px; background: #111; align-items: center; gap: 15px; border-bottom: 1px solid #222; }
         #thumb { flex: 1; display: flex; align-items: center; overflow: hidden; }
@@ -97,13 +92,13 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const sb = window.supabase.createClient(SB_URL, SB_KEY);
         
-        let myName = "Гость", rad = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
+        let myName = localStorage.getItem('user_name') || "Гость"; 
+        let rad = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
         let fileData = null, recorder = null, audioChunks = [], isRec = false;
 
         const l = document.getElementById('logo');
         let clicks = 0;
         l.onclick = () => { clicks++; if(clicks >= 5) { if(prompt("Пароль:") === "Seregasib") document.getElementById('admin-reg').style.display='block'; clicks=0; } };
-        l.oncontextmenu = (e) => { e.preventDefault(); if(prompt("Пароль:") === "Seregasib") document.getElementById('admin-reg').style.display='block'; };
 
         function controlRadio() {
             const b = document.getElementById('rad-btn'), s = document.getElementById('bolt-svg');
@@ -117,8 +112,7 @@
             document.getElementById('webcam').srcObject = stream;
             await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(URL_M), faceapi.nets.faceLandmark68Net.loadFromUri(URL_M), faceapi.nets.faceRecognitionNet.loadFromUri(URL_M)]);
             const { data: db } = await sb.from('allowed_faces').select('*');
-            const v = document.getElementById('webcam'), c = document.getElementById('face-cv');
-            const ctx = c.getContext('2d');
+            const v = document.getElementById('webcam'), c = document.getElementById('face-cv'), ctx = c.getContext('2d');
             faceapi.matchDimensions(c, { width: 280, height: 280 });
 
             const loop = setInterval(async () => {
@@ -129,7 +123,9 @@
                     dec.forEach(d => {
                         db?.forEach(u => {
                             if (faceapi.euclideanDistance(d.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
-                                myName = u.name; clearInterval(loop); startApp();
+                                myName = u.name;
+                                localStorage.setItem('user_name', myName);
+                                clearInterval(loop); startApp();
                             }
                         });
                     });
@@ -158,7 +154,7 @@
             data?.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'm-bubble';
-                let html = `<b>${m.sender_name}</b>`;
+                let html = `<b>${m.sender_name || "Serega"}</b>`;
                 if(m.media_url) {
                     if(m.media_url.includes('.mp4')) html += `<video src="${m.media_url}" controls playsinline></video>`;
                     else if(m.media_url.includes('.webm')) html += `<audio src="${m.media_url}" controls></audio>`;
@@ -204,17 +200,13 @@
             } else { recorder.stop(); btn.classList.remove('rec-active'); isRec = false; }
         }
 
-        // ПОЛНОСТЬЮ ОБНОВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ
         async function handleSend() {
             const input = document.getElementById('m-text');
             const sendBtn = document.getElementById('send-btn');
             const text = input.value.trim();
-            
             if (!text && !fileData) return;
 
             sendBtn.disabled = true;
-            sendBtn.style.opacity = '0.5';
-
             try {
                 let url = null;
                 if (fileData) {
@@ -224,20 +216,21 @@
                     url = sb.storage.from('uploads').getPublicUrl(fileName).data.publicUrl;
                 }
 
+                // ВАЖНО: Принудительно передаем имя, чтобы не было NULL
+                const currentName = myName === "Гость" ? "Serega" : myName;
+
                 const { error: insErr } = await sb.from('messages').insert([
-                    { sender_name: myName, content: text, media_url: url }
+                    { sender_name: currentName, content: text, media_url: url }
                 ]);
 
                 if (insErr) throw insErr;
-
                 input.value = '';
                 resetFile();
+                loadMessages();
             } catch (err) {
-                console.error("Ошибка отправки:", err);
-                alert("Ошибка при отправке: " + err.message);
+                alert("Ошибка: " + err.message);
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.style.opacity = '1';
             }
         }
 
