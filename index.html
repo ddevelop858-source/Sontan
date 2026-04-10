@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Ultimate</title>
+    <title>Sontan System Final</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
@@ -49,10 +49,8 @@
         .btn-main { width: 45px; height: 45px; border-radius: 50%; background: var(--neon); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
         .rec-active { background: #ff0055 !important; animation: flash 1s infinite; }
 
-        /* ПРОСМОТР ФОТО */
         #viewer { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:20000; align-items:center; justify-content:center; }
         #viewer img { max-width:95%; max-height:95%; border-radius:10px; }
-
         #admin-reg { display: none; margin-top: 20px; padding: 10px 30px; background: #ff00ff; border: none; border-radius: 20px; color: white; font-weight: bold; }
     </style>
 </head>
@@ -87,7 +85,7 @@
                 <input type="file" id="f-upload" hidden accept="image/*,video/*" onchange="makePreview(this)">
                 <input type="text" id="m-text" placeholder="Сообщение...">
                 <button class="btn-main" id="rec-btn" onclick="toggleVoice()">🎤</button>
-                <button class="btn-main" onclick="handleSend()">➤</button>
+                <button class="btn-main" id="send-btn" onclick="handleSend()">➤</button>
             </div>
         </div>
     </div>
@@ -102,7 +100,6 @@
         let myName = "Гость", rad = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
         let fileData = null, recorder = null, audioChunks = [], isRec = false;
 
-        // СЕКРЕТКА
         const l = document.getElementById('logo');
         let clicks = 0;
         l.onclick = () => { clicks++; if(clicks >= 5) { if(prompt("Пароль:") === "Seregasib") document.getElementById('admin-reg').style.display='block'; clicks=0; } };
@@ -126,7 +123,7 @@
 
             const loop = setInterval(async () => {
                 const dec = await faceapi.detectAllFaces(v).withFaceLandmarks().withFaceDescriptors();
-                ctx.clearRect(0, 0, 280, 280); // ЧИСТИМ ЛИНИИ
+                ctx.clearRect(0, 0, 280, 280);
                 if (dec.length > 0) {
                     faceapi.draw.drawFaceLandmarks(c, faceapi.resizeResults(dec, { width: 280, height: 280 }));
                     dec.forEach(d => {
@@ -146,7 +143,6 @@
             document.getElementById('chat-ui').style.display = 'flex';
             loadMessages();
             
-            // СЧЕТЧИК В СЕТИ
             const ch = sb.channel('room1');
             ch.on('presence', { event: 'sync' }, () => {
                 document.getElementById('on-count').innerText = Object.keys(ch.presenceState()).length;
@@ -183,11 +179,14 @@
 
         function makePreview(el) {
             fileData = el.files[0];
+            if(!fileData) return;
             document.getElementById('preview').style.display = 'flex';
-            document.getElementById('thumb').innerHTML = fileData.type.includes('video') ? `<video src="${URL.createObjectURL(fileData)}" muted></video>` : `<img src="${URL.createObjectURL(fileData)}">`;
+            const thumb = document.getElementById('thumb');
+            if(fileData.type.includes('video')) thumb.innerHTML = `<video src="${URL.createObjectURL(fileData)}" muted></video>`;
+            else thumb.innerHTML = `<img src="${URL.createObjectURL(fileData)}">`;
         }
 
-        function resetFile() { fileData = null; document.getElementById('preview').style.display = 'none'; document.getElementById('thumb').innerHTML = ''; }
+        function resetFile() { fileData = null; document.getElementById('preview').style.display = 'none'; document.getElementById('thumb').innerHTML = ''; document.getElementById('f-upload').value = ''; }
 
         async function toggleVoice() {
             const btn = document.getElementById('rec-btn');
@@ -205,18 +204,40 @@
             } else { recorder.stop(); btn.classList.remove('rec-active'); isRec = false; }
         }
 
+        // ПОЛНОСТЬЮ ОБНОВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ
         async function handleSend() {
             const input = document.getElementById('m-text');
-            let url = null;
-            if (fileData) {
-                const path = Date.now() + "_" + (fileData.name || "voice.webm");
-                await sb.storage.from('uploads').upload(path, fileData);
-                url = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
-                resetFile();
-            }
-            if (input.value || url) {
-                await sb.from('messages').insert([{ sender_name: myName, content: input.value, media_url: url }]);
+            const sendBtn = document.getElementById('send-btn');
+            const text = input.value.trim();
+            
+            if (!text && !fileData) return;
+
+            sendBtn.disabled = true;
+            sendBtn.style.opacity = '0.5';
+
+            try {
+                let url = null;
+                if (fileData) {
+                    const fileName = `${Date.now()}_${fileData.name || 'file'}`;
+                    const { data: upData, error: upErr } = await sb.storage.from('uploads').upload(fileName, fileData);
+                    if (upErr) throw upErr;
+                    url = sb.storage.from('uploads').getPublicUrl(fileName).data.publicUrl;
+                }
+
+                const { error: insErr } = await sb.from('messages').insert([
+                    { sender_name: myName, content: text, media_url: url }
+                ]);
+
+                if (insErr) throw insErr;
+
                 input.value = '';
+                resetFile();
+            } catch (err) {
+                console.error("Ошибка отправки:", err);
+                alert("Ошибка при отправке: " + err.message);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.style.opacity = '1';
             }
         }
 
