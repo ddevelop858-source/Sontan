@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sontan System Ultra Stable</title>
+    <title>Sontan System Final Core</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         :root { --neon: #00f2ff; --bg: #05070a; }
         * { box-sizing: border-box; transition: 0.3s; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; overflow: hidden; height: 100dvh; }
-        #status { position: fixed; top: 20px; left: 20px; z-index: 9999; font-size: 13px; color: var(--neon); background: rgba(0,0,0,0.8); padding: 7px 15px; border-radius: 20px; border: 1px solid var(--neon); display: none; }
+
+        #status { position: fixed; top: 20px; left: 20px; z-index: 9999; font-size: 13px; color: var(--neon); background: rgba(0,0,0,0.7); padding: 7px 15px; border-radius: 20px; border: 1px solid var(--neon); display: none; }
         .dot { display: inline-block; width: 8px; height: 8px; background: #0f0; border-radius: 50%; margin-right: 7px; box-shadow: 0 0 5px #0f0; }
+
         .radio-zone { position: fixed; top: 20px; right: 20px; z-index: 10001; display: flex; flex-direction: column; align-items: center; }
         .radio-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--neon); background: #000; color: var(--neon); display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; text-align: center; font-weight: bold; }
         .bolt-svg { width: 40px; height: 50px; fill: var(--neon); opacity: 0.1; margin-top: -5px; }
@@ -19,21 +21,26 @@
         .bolt-active { opacity: 1; animation: flash 1.5s infinite; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes flash { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
         #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #logo { color: var(--neon); font-size: 30px; font-weight: bold; letter-spacing: 5px; margin-bottom: 30px; }
+        #logo { color: var(--neon); font-size: 30px; font-weight: bold; letter-spacing: 5px; margin-bottom: 30px; user-select: none; }
         .v-box { width: 280px; height: 280px; border-radius: 50%; border: 2px solid var(--neon); overflow: hidden; position: relative; }
         video#webcam { width: 100%; height: 100%; object-fit: cover; }
+
         #chat-ui { display: none; height: 100dvh; flex-direction: column; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 100px; }
-        .m-bubble { background: #161b22; padding: 12px 16px; border-radius: 18px; border-left: 4px solid var(--neon); max-width: 85%; align-self: flex-start; position: relative; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 160px; scroll-behavior: smooth; }
+        .m-bubble { background: #161b22; padding: 12px 16px; border-radius: 18px; border-left: 4px solid var(--neon); max-width: 85%; align-self: flex-start; }
         .m-bubble b { color: var(--neon); font-size: 11px; display: block; margin-bottom: 5px; }
         .m-bubble img, .m-bubble video { max-width: 100%; border-radius: 12px; margin-top: 10px; }
-        .bottom-bar { position: fixed; bottom: 0; width: 100%; background: #05070a; border-top: 1px solid #222; padding: 10px; z-index: 6000; }
-        #preview { display: none; padding: 10px; background: #111; border-radius: 10px; margin-bottom: 10px; align-items: center; gap: 10px; }
-        #preview img, #preview video { height: 50px; border-radius: 5px; }
-        .row { display: flex; gap: 10px; align-items: center; }
+        audio { width: 100%; margin-top: 10px; filter: invert(1); }
+
+        .bottom-bar { position: fixed; bottom: 0; width: 100%; background: #05070a; border-top: 1px solid #222; z-index: 6000; }
+        #preview { display: none; padding: 12px; background: #111; align-items: center; gap: 15px; border-bottom: 1px solid #222; }
+        #thumb { flex: 1; display: flex; align-items: center; }
+        #thumb img, #thumb video { height: 60px; border-radius: 8px; }
+        .row { display: flex; padding: 15px; gap: 10px; align-items: center; }
         input { flex: 1; background: #111; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 25px; outline: none; }
-        .btn-main { width: 45px; height: 45px; border-radius: 50%; background: var(--neon); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #000; }
+        .btn-main { width: 45px; height: 45px; border-radius: 50%; background: var(--neon); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .rec-active { background: #ff0055 !important; animation: flash 1s infinite; }
     </style>
 </head>
@@ -47,15 +54,16 @@
     </div>
 
     <div id="auth-screen">
-        <div id="logo" onclick="secret()">SONTAN SYSTEM</div>
+        <div id="logo" onclick="checkAdmin()">SONTAN SYSTEM</div>
         <div class="v-box"><video id="webcam" autoplay muted playsinline></video></div>
-        <button onclick="runFaceID()" id="auth-btn" style="margin-top:30px; padding:15px 60px; border-radius:30px; background:var(--neon); border:none; font-weight:bold;">ВОЙТИ</button>
+        <button onclick="runFaceID()" id="start-btn" style="margin-top:30px; padding:15px 60px; border-radius:30px; background:var(--neon); border:none; font-weight:bold; color:#000;">ВОЙТИ</button>
+        <button id="admin-reg" style="display:none; margin-top:20px; padding:10px; background:#f0f; border:none; border-radius:10px;" onclick="regFace()">РЕГИСТРАЦИЯ</button>
     </div>
 
     <div id="chat-ui">
         <div id="messages"></div>
         <div class="bottom-bar">
-            <div id="preview"><div id="thumb"></div><button onclick="resetFile()" style="background:none; border:none; color:red;">✕</button></div>
+            <div id="preview"><div id="thumb"></div><button onclick="resetFile()" style="background:none; border:none; color:red; font-size:20px;">✕</button></div>
             <div class="row">
                 <button class="btn-main" onclick="document.getElementById('f-upload').click()">+</button>
                 <input type="file" id="f-upload" hidden accept="image/*,video/*" onchange="makePreview(this)">
@@ -70,12 +78,13 @@
         const SB_URL = 'https://gwegmxznhlmzejqdpykv.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZWdteHpuaGxtemVqcWRweWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTYwNjUsImV4cCI6MjA5MTAzMjA2NX0.LZM1GRtqylBxX-d_eze3OmfHsnfRQI4kROZpr_OIWx0';
         const sb = window.supabase.createClient(SB_URL, SB_KEY);
-
-        let myName = localStorage.getItem('serega_name') || "Serega";
+        
+        let myName = localStorage.getItem('user_id_name') || "Serega";
         let rad = new Audio('https://ep256.hostingradio.ru:8052/europaplus256.mp3');
         let fileData = null, recorder = null, audioChunks = [], isRec = false;
 
-        function secret() { if(prompt("Pass:") === "Seregasib") localStorage.setItem('admin', '1'); }
+        let clicks = 0;
+        function checkAdmin() { clicks++; if(clicks >= 5) { if(prompt("Pass:") === "Seregasib") document.getElementById('admin-reg').style.display='block'; clicks=0; } }
 
         function controlRadio() {
             const b = document.getElementById('rad-btn'), s = document.getElementById('bolt-svg');
@@ -84,23 +93,21 @@
         }
 
         async function runFaceID() {
-            document.getElementById('auth-btn').innerText = "ЗАГРУЗКА...";
+            document.getElementById('start-btn').innerText = "ЗАГРУЗКА...";
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             document.getElementById('webcam').srcObject = stream;
-            const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)]);
+            const URL_M = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+            await Promise.all([faceapi.nets.ssdMobilenetv1.loadFromUri(URL_M), faceapi.nets.faceLandmark68Net.loadFromUri(URL_M), faceapi.nets.faceRecognitionNet.loadFromUri(URL_M)]);
             
-            const { data: users } = await sb.from('allowed_faces').select('*');
-            const interval = setInterval(async () => {
-                const detect = await faceapi.detectSingleFace('webcam').withFaceLandmarks().withFaceDescriptor();
-                if (detect) {
-                    users.forEach(u => {
-                        const dist = faceapi.euclideanDistance(detect.descriptor, new Float32Array(u.face_descriptor));
-                        if (dist < 0.45) {
+            const { data: db } = await sb.from('allowed_faces').select('*');
+            const loop = setInterval(async () => {
+                const dec = await faceapi.detectSingleFace('webcam').withFaceLandmarks().withFaceDescriptor();
+                if (dec) {
+                    db?.forEach(u => {
+                        if (faceapi.euclideanDistance(dec.descriptor, new Float32Array(u.face_descriptor)) < 0.45) {
                             myName = u.name;
-                            localStorage.setItem('serega_name', myName);
-                            clearInterval(interval);
-                            startApp();
+                            localStorage.setItem('user_id_name', myName);
+                            clearInterval(loop); startApp();
                         }
                     });
                 }
@@ -113,33 +120,30 @@
             document.getElementById('status').style.display = 'block';
             loadMessages();
             
-            const channel = sb.channel('online_users', { config: { presence: { key: myName } } });
-            channel.on('presence', { event: 'sync' }, () => {
-                const state = channel.presenceState();
-                document.getElementById('on-count').innerText = Object.keys(state).length;
-            }).subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() });
-            });
+            const ch = sb.channel('room1', { config: { presence: { key: myName } } });
+            ch.on('presence', { event: 'sync' }, () => {
+                document.getElementById('on-count').innerText = Object.keys(ch.presenceState()).length;
+            }).subscribe(async (s) => { if(s === 'SUBSCRIBED') await ch.track({ online: true }); });
 
-            sb.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, loadMessages).subscribe();
+            sb.channel('db').on('postgres_changes', {event:'*', schema:'public', table:'messages'}, loadMessages).subscribe();
         }
 
         async function loadMessages() {
             const { data } = await sb.from('messages').select('*').order('created_at', { ascending: true });
             const box = document.getElementById('messages');
             box.innerHTML = '';
-            data.forEach(m => {
+            data?.forEach(m => {
                 const div = document.createElement('div');
                 div.className = 'm-bubble';
-                let content = `<b>${m.sender_name}</b>`;
-                if (m.media_url) {
-                    if (m.media_url.includes('.webm')) content += `<audio src="${m.media_url}" controls></audio>`;
-                    else if (m.media_url.includes('.mp4')) content += `<video src="${m.media_url}" controls playsinline></video>`;
-                    else content += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`;
+                let html = `<b>${m.sender_name || "Serega"}</b>`;
+                if(m.media_url) {
+                    if(m.media_url.includes('.mp4')) html += `<video src="${m.media_url}" controls playsinline></video>`;
+                    else if(m.media_url.includes('.webm')) html += `<audio src="${m.media_url}" controls></audio>`;
+                    else html += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`;
                 }
-                if (m.content) content += `<span>${m.content}</span>`;
-                div.innerHTML = content;
-                div.onclick = () => { if(confirm("Удалить?")) sb.from('messages').delete().eq('id', m.id).then(loadMessages); };
+                if(m.content) html += `<div>${m.content}</div>`;
+                div.innerHTML = html;
+                div.onclick = () => { if(confirm("Удалить?")) sb.from('messages').delete().eq('id', m.id); };
                 box.appendChild(div);
             });
             box.scrollTop = box.scrollHeight;
@@ -147,8 +151,9 @@
 
         function makePreview(el) {
             fileData = el.files[0];
-            const p = document.getElementById('preview'), t = document.getElementById('thumb');
-            p.style.display = 'flex';
+            if(!fileData) return;
+            document.getElementById('preview').style.display = 'flex';
+            const t = document.getElementById('thumb');
             t.innerHTML = fileData.type.includes('video') ? `<video src="${URL.createObjectURL(fileData)}"></video>` : `<img src="${URL.createObjectURL(fileData)}">`;
         }
 
@@ -156,10 +161,9 @@
 
         async function toggleVoice() {
             const btn = document.getElementById('rec-btn');
-            if (!isRec) {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                recorder = new MediaRecorder(stream);
-                audioChunks = [];
+            if(!isRec) {
+                const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+                recorder = new MediaRecorder(s); audioChunks = [];
                 recorder.ondataavailable = e => audioChunks.push(e.data);
                 recorder.onstop = () => {
                     const blob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -167,47 +171,46 @@
                     document.getElementById('preview').style.display = 'flex';
                     document.getElementById('thumb').innerHTML = `<audio src="${URL.createObjectURL(blob)}" controls></audio>`;
                 };
-                recorder.start();
-                btn.classList.add('rec-active');
-                isRec = true;
-            } else {
-                recorder.stop();
-                btn.classList.remove('rec-active');
-                isRec = false;
-            }
+                recorder.start(); btn.classList.add('rec-active'); isRec = true;
+            } else { recorder.stop(); btn.classList.remove('rec-active'); isRec = false; }
         }
 
         async function handleSend() {
-            const input = document.getElementById('m-text'), btn = document.getElementById('send-btn');
+            const input = document.getElementById('m-text');
+            const btn = document.getElementById('send-btn');
             const text = input.value.trim();
-            if (!text && !fileData) return;
+            if(!text && !fileData) return;
 
             btn.disabled = true;
             try {
-                let mediaUrl = null;
-                if (fileData) {
+                let url = null;
+                if(fileData) {
                     const path = `${Date.now()}_${fileData.name}`;
-                    await sb.storage.from('uploads').upload(path, fileData);
-                    mediaUrl = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
+                    const { error: upErr } = await sb.storage.from('uploads').upload(path, fileData);
+                    if(upErr) throw upErr;
+                    url = sb.storage.from('uploads').getPublicUrl(path).data.publicUrl;
                 }
 
-                // КРИТИЧЕСКАЯ ПРОВЕРКА ИМЕНИ
-                const finalName = myName || localStorage.getItem('serega_name') || "Serega";
+                // КЛЮЧЕВОЙ МОМЕНТ: Принудительное имя
+                const sender = myName || localStorage.getItem('user_id_name') || "Serega";
 
-                const { error } = await sb.from('messages').insert([{
-                    sender_name: finalName,
-                    content: text,
-                    media_url: mediaUrl
-                }]);
+                const { error: insErr } = await sb.from('messages').insert([
+                    { sender_name: sender, content: text, media_url: url }
+                ]);
+                if(insErr) throw insErr;
 
-                if (error) throw error;
-                input.value = '';
-                resetFile();
-            } catch (err) {
-                alert("Ошибка: " + err.message);
+                input.value = ''; resetFile();
+            } catch (e) {
+                console.error(e);
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        async function regFace() {
+            const n = prompt("Имя:");
+            const d = await faceapi.detectSingleFace('webcam').withFaceLandmarks().withFaceDescriptor();
+            if(d && n) await sb.from('allowed_faces').insert([{ name: n, face_descriptor: Array.from(d.descriptor) }]);
         }
     </script>
 </body>
